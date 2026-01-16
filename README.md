@@ -8,6 +8,8 @@
 
 Put Claude Code in your pocket — the open-source desktop client that makes Claude Code's power accessible to everyone. No terminal, ever.
 
+**Our philosophy:** Wrap complex technology into intuitive human interaction.
+
 [![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#installation)

@@ -8,6 +8,8 @@
 
 把 Claude Code 裝進口袋 — 開源桌面用戶端，讓每個人都能輕鬆使用 Claude Code 的強大能力。告別終端機。
 
+**我們的理念：** 將複雜技術封裝成符合直覺的人類互動。
+
 [![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#安裝)

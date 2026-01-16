@@ -8,6 +8,8 @@
 
 Lleva Claude Code en tu bolsillo — el cliente de escritorio de código abierto que hace accesible el poder de Claude Code para todos. Sin terminal, nunca.
 
+**Nuestra filosofía:** Envolver tecnología compleja en interacción humana intuitiva.
+
 [![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#instalación)

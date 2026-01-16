@@ -6,7 +6,9 @@
 
 ### Claude Code に欠けていた UI
 
-Claude Code をポケットに — 誰もが Claude Code のパワーを使えるようにするオープンソースの���スクトップクライアント。ターミナルは不要。
+Claude Code をポケットに — 誰もが Claude Code のパワーを使えるようにするオープンソースのデスクトップクライアント。ターミナルは不要。
+
+**私たちの哲学：** 複雑な技術を直感的な人間のインタラクションにラップする。
 
 [![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)

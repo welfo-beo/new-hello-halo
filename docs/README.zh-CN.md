@@ -8,6 +8,8 @@
 
 把 Claude Code 装进口袋 — 开源桌面客户端，让每个人都能轻松使用 Claude Code 的强大能力。告别终端。
 
+**我们的理念：** 将复杂技术封装成符合直觉的人类交互。
+
 [![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#安装)
