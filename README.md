@@ -4,11 +4,14 @@
 
 # Halo
 
-### The Missing UI for Claude Code
+### The First Open Source Cowork
 
-Put Claude Code in your pocket — the open-source desktop client that makes Claude Code's power accessible to everyone. No terminal, ever.
+**The missing GUI for Claude Code.**
 
-**Our philosophy:** Wrap complex technology into intuitive human interaction.
+Experience the full power of an AI coworker without touching the terminal. Halo brings a visual, cross-platform desktop experience to everyone—open source and free.
+
+> **Our Philosophy:** Wrap complex technology into intuitive human interaction.
+
 
 [![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
