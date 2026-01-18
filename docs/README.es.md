@@ -125,7 +125,7 @@ Extiende capacidades con Model Context Protocol. Compatible con servidores MCP d
 | Plataforma | Descargar | Requisitos |
 |----------|----------|--------------|
 | **macOS** (Apple Silicon) | [Descargar .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | Próximamente | macOS 11+ |
+| **macOS** (Intel) | [Descargar .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
 | **Windows** | [Descargar .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
 | **Linux** | [Descargar .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/Móvil) | Habilita Acceso Remoto en la app de escritorio | Cualquier navegador moderno |

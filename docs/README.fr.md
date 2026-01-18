@@ -125,7 +125,7 @@ Laissez l'IA contrôler un vrai navigateur intégré. Web scraping, remplissage 
 | Plateforme | Télécharger | Prérequis |
 |----------|----------|--------------|
 | **macOS** (Apple Silicon) | [Télécharger .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | Bientôt disponible | macOS 11+ |
+| **macOS** (Intel) | [Télécharger .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
 | **Windows** | [Télécharger .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
 | **Linux** | [Télécharger .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/Mobile) | Activez l'Accès Distant dans l'app de bureau | N'importe quel navigateur moderne |

@@ -125,7 +125,7 @@
 | 平台 | 下载 | 要求 |
 |----------|----------|--------------|
 | **macOS** (Apple Silicon) | [下载 .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | 即将推出 | macOS 11+ |
+| **macOS** (Intel) | [下载 .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
 | **Windows** | [下载 .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
 | **Linux** | [下载 .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/移动端) | 在桌面应用中启用远程访问 | 任何现代浏览器 |

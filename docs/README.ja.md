@@ -125,7 +125,7 @@ Model Context Protocol で機能を拡張。Claude Desktop MCP サーバーと�
 | プラットフォーム | ダウンロード | 要件 |
 |----------|----------|--------------|
 | **macOS** (Apple Silicon) | [.dmg をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | 近日公開 | macOS 11+ |
+| **macOS** (Intel) | [.dmg をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
 | **Windows** | [.exe をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
 | **Linux** | [.AppImage をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/モバイル) | デスクトップアプリでリモートアクセスを有効化 | 最新のブラウザ |

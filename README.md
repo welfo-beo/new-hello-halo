@@ -127,7 +127,7 @@ Extend capabilities with Model Context Protocol. Compatible with Claude Desktop 
 | Platform | Download | Requirements |
 |----------|----------|--------------|
 | **macOS** (Apple Silicon) | [Download .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | Coming soon | macOS 11+ |
+| **macOS** (Intel) | [Download .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
 | **Windows** | [Download .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
 | **Linux** | [Download .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/Mobile) | Enable Remote Access in desktop app | Any modern browser |
