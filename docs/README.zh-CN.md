@@ -247,7 +247,17 @@ npm run dev
 - [GitHub Discussions](https://github.com/openkursar/hello-halo/discussions) — 问题与想法
 - [Issues](https://github.com/openkursar/hello-halo/issues) — Bug 报告与功能请求
 
- ![wecom-temp-176413-bb326668e7f58a19928291322e42ac79](https://github.com/user-attachments/assets/915427da-1b61-4b91-a7a0-30e47f897eee)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/915427da-1b61-4b91-a7a0-30e47f897eee" width="200" alt="微信群二维码">
+</p>
+
+<p align="center">
+  <em>如二维码过期，可加微信：helloddbb<strong>_</strong>（注意末尾有下划线，昵称"混沌数字"），备注"Halo"，将邀请入群</em>
+</p>
+
+<p align="center">
+  <img src="YOUR_PERSONAL_WECHAT_QR_CODE_URL_HERE" width="200" alt="个人微信二维码">
+</p>
 
 ---
 
