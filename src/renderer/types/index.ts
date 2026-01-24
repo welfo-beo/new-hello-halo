@@ -56,6 +56,7 @@ export interface ApiConfig {
   apiKey: string;
   apiUrl: string;
   model: string;
+  availableModels?: string[];
 }
 
 export interface PermissionConfig {
@@ -111,6 +112,7 @@ export interface CustomSourceConfig {
   apiKey: string;
   apiUrl: string;
   model: string;
+  availableModels?: string[];
 }
 
 // AI Sources - manages multiple login sources

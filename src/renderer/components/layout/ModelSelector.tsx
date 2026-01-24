@@ -118,11 +118,11 @@ export function ModelSelector() {
         ...aiSources.custom,
         model: modelId
       }
-      // Also update legacy api field
-      ;(config as any).api = {
-        ...config.api,
-        model: modelId
-      }
+        // Also update legacy api field
+        ; (config as any).api = {
+          ...config.api,
+          model: modelId
+        }
     } else if (providerConfig) {
       // OAuth provider - update dynamically
       newAiSources[source] = {
@@ -179,17 +179,15 @@ export function ModelSelector() {
                   <button
                     key={model.id}
                     onClick={() => handleSelectModel('custom', model.id)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary/80 transition-colors flex items-center gap-2 ${
-                      currentSource === 'custom' && aiSources.custom?.model === model.id
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary/80 transition-colors flex items-center gap-2 ${currentSource === 'custom' && aiSources.custom?.model === model.id
                         ? 'text-primary'
                         : 'text-foreground'
-                    }`}
+                      }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      currentSource === 'custom' && aiSources.custom?.model === model.id
+                    <span className={`w-1.5 h-1.5 rounded-full ${currentSource === 'custom' && aiSources.custom?.model === model.id
                         ? 'bg-primary'
                         : 'bg-transparent'
-                    }`} />
+                      }`} />
                     {model.name}
                   </button>
                 ))
@@ -197,13 +195,11 @@ export function ModelSelector() {
                 // OpenAI compatible: show current model only (user configures in settings)
                 <button
                   onClick={() => setIsOpen(false)}
-                  className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary/80 transition-colors flex items-center gap-2 ${
-                    currentSource === 'custom' ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary/80 transition-colors flex items-center gap-2 ${currentSource === 'custom' ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    currentSource === 'custom' ? 'bg-primary' : 'bg-transparent'
-                  }`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${currentSource === 'custom' ? 'bg-primary' : 'bg-transparent'
+                    }`} />
                   {aiSources.custom?.model || 'Custom Model'}
                 </button>
               )}
@@ -223,17 +219,15 @@ export function ModelSelector() {
                   <button
                     key={modelId}
                     onClick={() => handleSelectModel(provider.type, modelId)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary/80 transition-colors flex items-center gap-2 ${
-                      currentSource === provider.type && provider.config?.model === modelId
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary/80 transition-colors flex items-center gap-2 ${currentSource === provider.type && provider.config?.model === modelId
                         ? 'text-primary'
                         : 'text-foreground'
-                    }`}
+                      }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      currentSource === provider.type && provider.config?.model === modelId
+                    <span className={`w-1.5 h-1.5 rounded-full ${currentSource === provider.type && provider.config?.model === modelId
                         ? 'bg-primary'
                         : 'bg-transparent'
-                    }`} />
+                      }`} />
                     {displayName}
                   </button>
                 )

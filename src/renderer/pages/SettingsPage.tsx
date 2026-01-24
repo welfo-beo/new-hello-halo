@@ -27,7 +27,7 @@ import { CheckCircle2, XCircle, ArrowLeft, Eye, EyeOff } from '../components/ico
 import { Header } from '../components/layout/Header'
 import { McpServerList } from '../components/settings/McpServerList'
 import { useTranslation, setLanguage, getCurrentLanguage, SUPPORTED_LOCALES, type LocaleCode } from '../i18n'
-import { Loader2, LogOut, Plus, Check, Globe, Key, MessageSquare, type LucideIcon } from 'lucide-react'
+import { Loader2, LogOut, Plus, Check, Globe, Key, MessageSquare, type LucideIcon, RefreshCw, ChevronDown } from 'lucide-react'
 
 /**
  * Get localized text based on current language
@@ -101,6 +101,11 @@ export function SettingsPage() {
   })
 
   // Connection status
+  const [fetchedModels, setFetchedModels] = useState<string[]>(
+    (config?.aiSources?.custom?.availableModels as string[]) || []
+  )
+  const [isFetchingModels, setIsFetchingModels] = useState(false)
+
   const [isValidating, setIsValidating] = useState(false)
   const [validationResult, setValidationResult] = useState<{
     valid: boolean
@@ -441,7 +446,8 @@ export function SettingsPage() {
           provider: provider as any,
           apiKey,
           apiUrl,
-          model
+          model,
+          availableModels: fetchedModels
         },
         aiSources: {
           ...config?.aiSources,
@@ -450,7 +456,8 @@ export function SettingsPage() {
             provider: provider as any,
             apiKey,
             apiUrl,
-            model
+            model,
+            availableModels: fetchedModels
           }
         }
       }
@@ -461,8 +468,101 @@ export function SettingsPage() {
       setShowCustomApiForm(false)
     } catch (error) {
       setValidationResult({ valid: false, message: t('Save failed') })
-    } finally {
       setIsValidating(false)
+    }
+  }
+
+
+  // Fetch models from custom API
+  const fetchModels = async () => {
+    if (!apiUrl) {
+      setValidationResult({ valid: false, message: t('Please enter API URL first') })
+      return
+    }
+    if (!apiKey) {
+      setValidationResult({ valid: false, message: t('Please enter API Key first') })
+      return
+    }
+
+    setIsFetchingModels(true)
+    setValidationResult(null)
+
+    try {
+      // Construct models endpoint
+      let baseUrl = apiUrl
+      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1)
+      if (baseUrl.endsWith('/chat/completions')) baseUrl = baseUrl.slice(0, -17)
+      if (baseUrl.endsWith('/v1')) baseUrl = baseUrl.slice(0, -3) // Some might just want base
+
+      // Try multiple common model endpoints if one fails? 
+      // Standard is {base}/v1/models. If user gave {base}/v1, we use {base}/v1/models.
+      // If user gave {base}/v1/chat/completions, we use {base}/v1/models.
+
+      // Let's rely on what the user gave. 
+      // Case 1: http://localhost:8000/v1/chat/completions -> http://localhost:8000/v1/models
+      // Case 2: http://localhost:8000/v1 -> http://localhost:8000/v1/models
+      // Case 3: http://localhost:8000 -> http://localhost:8000/models OR http://localhost:8000/v1/models?
+
+      // Heuristic:
+      // Remove trailing slash
+      baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
+
+      // Remove /chat/completions suffix
+      if (baseUrl.endsWith('/chat/completions')) {
+        baseUrl = baseUrl.replace(/\/chat\/completions$/, '')
+      }
+
+      // Now we have likely .../v1 or just ...
+      // We accept that we append /models
+      const url = `${baseUrl}/models`
+      console.log('[SettingsPage] Fetching models from:', url)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      console.log('[SettingsPage] Fetch response status:', response.status)
+
+      if (!response.ok) {
+        // Try adding /v1 if missing?
+        // For now just error
+        throw new Error(`Failed to fetch models (${response.status})`)
+      }
+
+      const data = await response.json()
+      console.log('[SettingsPage] Fetch response data:', data)
+
+      // OpenAI compatible format: { data: [{ id: 'model-id', ... }] }
+      if (data.data && Array.isArray(data.data)) {
+        const models = data.data
+          .map((m: any) => m.id)
+          .filter((id: any) => typeof id === 'string')
+          .sort()
+
+        if (models.length === 0) {
+          throw new Error('No models found in response')
+        }
+
+        setFetchedModels(models)
+
+        // Auto-select first model if current one is not in list or is generic
+        if (models.length > 0 && (!model || model === 'gpt-4o-mini' || model === 'deepseek-chat')) {
+          setModel(models[0])
+        }
+
+        setValidationResult({ valid: true, message: t('Models fetched successfully') })
+      } else {
+        throw new Error('Invalid API response format')
+      }
+    } catch (err) {
+      console.error('Fetch models error:', err)
+      setValidationResult({ valid: false, message: t('Failed to fetch models') })
+    } finally {
+      setIsFetchingModels(false)
     }
   }
 
@@ -513,11 +613,10 @@ export function SettingsPage() {
                     return (
                       <div
                         key={provider.type}
-                        className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                          currentSource === provider.type
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-muted-foreground/50'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${currentSource === provider.type
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-muted-foreground/50'
+                          }`}
                         onClick={() => handleSwitchSource(provider.type)}
                       >
                         <div className="flex items-center justify-between">
@@ -626,8 +725,8 @@ export function SettingsPage() {
                                 title={t('Copy code')}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                                 </svg>
                               </button>
                             </div>
@@ -661,11 +760,10 @@ export function SettingsPage() {
               {/* Custom API Source Card */}
               {config?.aiSources?.custom?.apiKey ? (
                 <div
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                    currentSource === 'custom'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-muted-foreground/50'
-                  }`}
+                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${currentSource === 'custom'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-muted-foreground/50'
+                    }`}
                   onClick={() => handleSwitchSource('custom')}
                 >
                   <div className="flex items-center justify-between">
@@ -781,13 +879,49 @@ export function SettingsPage() {
                             ))}
                           </select>
                         ) : (
-                          <input
-                            type="text"
-                            value={model}
-                            onChange={(e) => setModel(e.target.value)}
-                            placeholder="claude-sonnet-4-5-20250929"
-                            className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                          />
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              {fetchedModels.length > 0 ? (
+                                <select
+                                  value={model}
+                                  onChange={(e) => setModel(e.target.value)}
+                                  className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors appearance-none"
+                                >
+                                  {!fetchedModels.includes(model) && model && (
+                                    <option value={model}>{model}</option>
+                                  )}
+                                  {fetchedModels.map((m) => (
+                                    <option key={m} value={m}>
+                                      {m}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={model}
+                                  onChange={(e) => setModel(e.target.value)}
+                                  placeholder={provider === 'openai' ? "gpt-4o-mini" : "claude-sonnet"}
+                                  className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                                />
+                              )}
+                              {fetchedModels.length > 0 && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={fetchModels}
+                              disabled={isFetchingModels || !apiKey || !apiUrl}
+                              className="px-2.5 py-1.5 bg-secondary hover:bg-secondary/80 text-foreground rounded-lg border border-border transition-colors disabled:opacity-50"
+                              title={t('Fetch available models')}
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isFetchingModels ? 'animate-spin' : ''}`} />
+                            </button>
+                          </div>
                         )}
                       </div>
 
