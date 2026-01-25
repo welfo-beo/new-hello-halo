@@ -5,7 +5,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '../stores/app.store'
 import { api } from '../api'
-import type { HaloConfig, ThemeMode, McpServersConfig, AISourceType, OAuthSourceConfig } from '../types'
+import { v4 as uuidv4 } from 'uuid'
+import type { HaloConfig, ThemeMode, McpServersConfig, AISourceType, OAuthSourceConfig, CustomSourceConfig } from '../types'
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '../types'
 
 /**
@@ -27,7 +28,7 @@ import { CheckCircle2, XCircle, ArrowLeft, Eye, EyeOff } from '../components/ico
 import { Header } from '../components/layout/Header'
 import { McpServerList } from '../components/settings/McpServerList'
 import { useTranslation, setLanguage, getCurrentLanguage, SUPPORTED_LOCALES, type LocaleCode } from '../i18n'
-import { Loader2, LogOut, Plus, Check, Globe, Key, MessageSquare, type LucideIcon } from 'lucide-react'
+import { Loader2, LogOut, Plus, Check, Globe, Key, MessageSquare, type LucideIcon, RefreshCw, ChevronDown, Edit2, Trash2 } from 'lucide-react'
 
 /**
  * Get localized text based on current language
@@ -94,6 +95,12 @@ export function SettingsPage() {
   const [provider, setProvider] = useState(config?.aiSources?.custom?.provider || config?.api?.provider || 'anthropic')
   const [model, setModel] = useState(config?.aiSources?.custom?.model || config?.api?.model || DEFAULT_MODEL)
   const [theme, setTheme] = useState<ThemeMode>(config?.appearance?.theme || 'system')
+
+  // Custom API multi-config support
+  const [editingKey, setEditingKey] = useState<string | null>(null) // null = creating new, or 'custom' = default
+  const [customName, setCustomName] = useState('') // Display name for the config
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
   // Custom model toggle: enable by default if current model is not in preset list
   const [useCustomModel, setUseCustomModel] = useState(() => {
     const currentModel = config?.aiSources?.custom?.model || config?.api?.model || DEFAULT_MODEL
@@ -101,6 +108,11 @@ export function SettingsPage() {
   })
 
   // Connection status
+  const [fetchedModels, setFetchedModels] = useState<string[]>(
+    (config?.aiSources?.custom?.availableModels as string[]) || []
+  )
+  const [isFetchingModels, setIsFetchingModels] = useState(false)
+
   const [isValidating, setIsValidating] = useState(false)
   const [validationResult, setValidationResult] = useState<{
     valid: boolean
@@ -188,10 +200,9 @@ export function SettingsPage() {
     // Refresh AI sources config
     api.refreshAISourcesConfig().then((result) => {
       if (result.success) {
-        console.log('[Settings] AI sources config refreshed')
         api.getConfig().then((configResult) => {
-          if (configResult.success) {
-            setConfig(configResult.data)
+          if (configResult.success && configResult.data) {
+            setConfig(configResult.data as HaloConfig)
           }
         })
       }
@@ -204,8 +215,8 @@ export function SettingsPage() {
         // Reload config after login completes
         setTimeout(() => {
           api.getConfig().then((configResult) => {
-            if (configResult.success) {
-              setConfig(configResult.data)
+            if (configResult.success && configResult.data) {
+              setConfig(configResult.data as HaloConfig)
             }
           })
           setLoginState(null)
@@ -244,10 +255,8 @@ export function SettingsPage() {
   }, [remoteStatus?.enabled, remoteStatus?.tunnel.url])
 
   const loadRemoteStatus = async () => {
-    console.log('[Settings] loadRemoteStatus called')
     try {
       const response = await api.getRemoteStatus()
-      console.log('[Settings] getRemoteStatus response:', response)
       if (response.success && response.data) {
         setRemoteStatus(response.data as RemoteAccessStatus)
       }
@@ -279,7 +288,6 @@ export function SettingsPage() {
       setIsEnablingRemote(true)
       try {
         const response = await api.enableRemoteAccess()
-        console.log('[Settings] Enable response:', response)
         if (response.success && response.data) {
           setRemoteStatus(response.data as RemoteAccessStatus)
         } else {
@@ -450,39 +458,224 @@ export function SettingsPage() {
   }
 
   // Handle save Custom API - save both legacy api and aiSources.custom
+  // Handle save Custom API - save both legacy api and aiSources.custom
+  // Handle save Custom API - save both legacy api and aiSources.custom
   const handleSaveCustomApi = async () => {
     setIsValidating(true)
     setValidationResult(null)
 
     try {
-      // Save to both legacy api and aiSources.custom for compatibility
-      const updates = {
-        api: {
+      const isDefault = editingKey === 'custom' || (!editingKey && !config?.aiSources?.custom?.apiKey && !config?.aiSources?.['custom_']);
+
+      let targetKey = editingKey;
+      let newId = (config?.aiSources?.[editingKey || ''] as any)?.id;
+
+      if (!targetKey) {
+        // Creating new
+        if (isDefault && !config?.aiSources?.custom?.apiKey) {
+          targetKey = 'custom'; // First one is always default for back-compat
+        } else {
+          newId = uuidv4();
+          targetKey = `custom_${newId}`;
+        }
+      }
+
+      // Prepare custom config object
+      const customConfig: CustomSourceConfig = {
+        id: newId,
+        name: customName || (targetKey === 'custom' ? t('Default API') : t('Custom API')),
+        type: 'custom',
+        provider: provider as any,
+        apiKey,
+        apiUrl,
+        model,
+        availableModels: fetchedModels
+      }
+
+      const updates: Partial<HaloConfig> = {
+        aiSources: {
+          ...config?.aiSources,
+          current: targetKey as AISourceType,
+          [targetKey]: customConfig
+        }
+      }
+
+      // If we are updating the default 'custom' key, also update legacy api field for back-compat
+      if (targetKey === 'custom') {
+        updates.api = {
           provider: provider as any,
           apiKey,
           apiUrl,
-          model
-        },
-        aiSources: {
-          ...config?.aiSources,
-          current: 'custom' as AISourceType,
-          custom: {
-            provider: provider as any,
-            apiKey,
-            apiUrl,
-            model
-          }
+          model,
+          availableModels: fetchedModels
         }
       }
+
       await api.setConfig(updates)
       setConfig({ ...config, ...updates } as HaloConfig)
-      setCurrentSource('custom')
+      setCurrentSource(targetKey as AISourceType)
       setValidationResult({ valid: true, message: t('Saved') })
+
+      // Close form
       setShowCustomApiForm(false)
+      setEditingKey(null)
     } catch (error) {
+      console.error('Save failed:', error)
       setValidationResult({ valid: false, message: t('Save failed') })
     } finally {
       setIsValidating(false)
+    }
+  }
+
+  // Handle add new custom source
+  const handleAddCustom = () => {
+    setEditingKey(null) // null = new
+    setProvider('anthropic')
+    setApiKey('')
+    setApiUrl('https://api.anthropic.com')
+    setModel(DEFAULT_MODEL)
+    setFetchedModels([])
+    setCustomName('')
+    setShowCustomApiForm(true)
+    setValidationResult(null)
+  }
+
+  // Handle edit custom source
+  const handleEditCustom = (key: string, source: any) => {
+    const config = source as CustomSourceConfig
+    setEditingKey(key)
+    setProvider(config.provider || 'anthropic')
+    setApiKey(config.apiKey || '')
+    setApiUrl(config.apiUrl || '')
+    setModel(config.model || '')
+    setFetchedModels(config.availableModels || [])
+
+    // Determine name
+    if (config.name) {
+      setCustomName(config.name)
+    } else {
+      setCustomName(key === 'custom' ? t('Default API') : t('Custom API'))
+    }
+
+    setShowCustomApiForm(true)
+    setValidationResult(null)
+  }
+
+  // Handle delete custom source confirmation
+  const handleDeleteCustom = async (key: string) => {
+    // If deleting current source, switch to something else (e.g. custom default if exists, or first available)
+
+    const newAiSources = { ...config?.aiSources }
+    delete newAiSources[key]
+
+    // Check if we need to update current
+    if (config?.aiSources?.current === key) {
+      // Fallback to default custom if exists, otherwise first available custom, otherwise clear?
+      const firstRemain = Object.keys(newAiSources).find(k => k.startsWith('custom') && k !== 'current')
+      newAiSources.current = (firstRemain || 'custom') as AISourceType
+    }
+
+    const newConfig = {
+      ...config,
+      aiSources: newAiSources
+    } as HaloConfig
+
+    await api.setConfig(newConfig)
+    setConfig(newConfig)
+    setShowDeleteConfirm(false)
+  }
+
+
+  // Fetch models from custom API
+  const fetchModels = async () => {
+    if (!apiUrl) {
+      setValidationResult({ valid: false, message: t('Please enter API URL first') })
+      return
+    }
+    if (!apiKey) {
+      setValidationResult({ valid: false, message: t('Please enter API Key first') })
+      return
+    }
+
+    setIsFetchingModels(true)
+    setValidationResult(null)
+
+    try {
+      // Construct models endpoint
+      let baseUrl = apiUrl
+      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1)
+      if (baseUrl.endsWith('/chat/completions')) baseUrl = baseUrl.slice(0, -17)
+      if (baseUrl.endsWith('/v1')) baseUrl = baseUrl.slice(0, -3) // Some might just want base
+
+      // Try multiple common model endpoints if one fails? 
+      // Standard is {base}/v1/models. If user gave {base}/v1, we use {base}/v1/models.
+      // If user gave {base}/v1/chat/completions, we use {base}/v1/models.
+
+      // Let's rely on what the user gave. 
+      // Case 1: http://localhost:8000/v1/chat/completions -> http://localhost:8000/v1/models
+      // Case 2: http://localhost:8000/v1 -> http://localhost:8000/v1/models
+      // Case 3: http://localhost:8000 -> http://localhost:8000/models OR http://localhost:8000/v1/models?
+
+      // Heuristic:
+      // Remove trailing slash
+      baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
+
+      // Remove /chat/completions suffix
+      if (baseUrl.endsWith('/chat/completions')) {
+        baseUrl = baseUrl.replace(/\/chat\/completions$/, '')
+      }
+
+      // Now we have likely .../v1 or just ...
+      // We accept that we append /models
+      const url = `${baseUrl}/models`
+      console.log('[SettingsPage] Fetching models from:', url)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      console.log('[SettingsPage] Fetch response status:', response.status)
+
+      if (!response.ok) {
+        // Try adding /v1 if missing?
+        // For now just error
+        throw new Error(`Failed to fetch models (${response.status})`)
+      }
+
+      const data = await response.json()
+      console.log('[SettingsPage] Fetch response data:', data)
+
+      // OpenAI compatible format: { data: [{ id: 'model-id', ... }] }
+      if (data.data && Array.isArray(data.data)) {
+        const models = data.data
+          .map((m: any) => m.id)
+          .filter((id: any) => typeof id === 'string')
+          .sort()
+
+        if (models.length === 0) {
+          throw new Error('No models found in response')
+        }
+
+        setFetchedModels(models)
+
+        // Auto-select first model if current one is not in list or is generic
+        if (models.length > 0 && (!model || model === 'gpt-4o-mini' || model === 'deepseek-chat')) {
+          setModel(models[0])
+        }
+
+        setValidationResult({ valid: true, message: t('Models fetched successfully') })
+      } else {
+        throw new Error('Invalid API response format')
+      }
+    } catch (err) {
+      console.error('Fetch models error:', err)
+      setValidationResult({ valid: false, message: t('Failed to fetch models') })
+    } finally {
+      setIsFetchingModels(false)
     }
   }
 
@@ -539,11 +732,10 @@ export function SettingsPage() {
                     return (
                       <div
                         key={provider.type}
-                        className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                          currentSource === provider.type
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-muted-foreground/50'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${currentSource === provider.type
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-muted-foreground/50'
+                          }`}
                         onClick={() => handleSwitchSource(provider.type)}
                       >
                         <div className="flex items-center justify-between">
@@ -652,8 +844,8 @@ export function SettingsPage() {
                                 title={t('Copy code')}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                                 </svg>
                               </button>
                             </div>
@@ -684,162 +876,254 @@ export function SettingsPage() {
                   }
                 })}
 
-              {/* Custom API Source Card */}
-              {config?.aiSources?.custom?.apiKey ? (
-                <div
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                    currentSource === 'custom'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-muted-foreground/50'
-                  }`}
-                  onClick={() => handleSwitchSource('custom')}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {/* Claude/API Logo */}
-                      <div className="w-10 h-10 rounded-lg bg-[#da7756]/20 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-[#da7756]" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M4.709 15.955l4.72-2.647.08-.08 2.726-1.529.08-.08 6.206-3.48a.25.25 0 00.125-.216V6.177a.25.25 0 00-.375-.217l-6.206 3.48-.08.08-2.726 1.53-.08.079-4.72 2.647a.25.25 0 00-.125.217v1.746c0 .18.193.294.354.216h.001zm13.937-3.584l-4.72 2.647-.08.08-2.726 1.529-.08.08-6.206 3.48a.25.25 0 00-.125.216v1.746a.25.25 0 00.375.217l6.206-3.48.08-.08 2.726-1.53.08-.079 4.72-2.647a.25.25 0 00.125-.217v-1.746a.25.25 0 00-.375-.216z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {config.aiSources?.custom?.provider === 'anthropic' ? 'Claude API' : t('Custom API')}
-                          </span>
-                          {currentSource === 'custom' && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary flex items-center gap-1">
-                              <Check className="w-3 h-3" />
-                              {t('Active')}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {AVAILABLE_MODELS.find(m => m.id === config.aiSources?.custom?.model)?.name || config.aiSources?.custom?.model}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowCustomApiForm(!showCustomApiForm)
-                      }}
-                      className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+              {/* Custom API Sources List */}
+              {Object.keys(config?.aiSources || {})
+                .filter(key => key === 'custom' || key.startsWith('custom_') || (config?.aiSources?.[key] as any)?.type === 'custom')
+                .sort((a, b) => (a === 'custom' ? -1 : b === 'custom' ? 1 : a.localeCompare(b)))
+                .map(key => {
+                  const sourceConfig = config?.aiSources?.[key] as CustomSourceConfig
+                  const isEditing = showCustomApiForm && editingKey === key
+                  const isActive = currentSource === key
+
+                  if (!sourceConfig || (!sourceConfig.apiKey && !isEditing)) return null
+
+                  return (
+                    <div
+                      key={key}
+                      className={`rounded-lg border-2 transition-all ${isActive
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/50'
+                        }`}
                     >
-                      {t('Edit')}
-                    </button>
-                  </div>
+                      {/* Card Header / Summary */}
+                      <div
+                        className="p-4 cursor-pointer flex items-center justify-between"
+                        onClick={() => handleSwitchSource(key as AISourceType)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#da7756]/20 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-[#da7756]" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M4.709 15.955l4.72-2.647.08-.08 2.726-1.529.08-.08 6.206-3.48a.25.25 0 00.125-.216V6.177a.25.25 0 00-.375-.217l-6.206 3.48-.08.08-2.726 1.53-.08.079-4.72 2.647a.25.25 0 00-.125.217v1.746c0 .18.193.294.354.216h.001zm13.937-3.584l-4.72 2.647-.08.08-2.726 1.529-.08.08-6.206 3.48a.25.25 0 00-.125.216v1.746a.25.25 0 00.375.217l6.206-3.48.08-.08 2.726-1.53.08-.079 4.72-2.647a.25.25 0 00.125-.217v-1.746a.25.25 0 00-.375-.216z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {sourceConfig.name || (sourceConfig.provider === 'anthropic' ? 'Claude API' : t('Custom API'))}
+                              </span>
+                              {isActive && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary flex items-center gap-1">
+                                  <Check className="w-3 h-3" />
+                                  {t('Active')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {/* Show model name */}
+                              {AVAILABLE_MODELS.find(m => m.id === sourceConfig.model)?.name || sourceConfig.model}
+                            </p>
+                          </div>
+                        </div>
 
-                  {/* Expanded Custom API Form */}
-                  {showCustomApiForm && currentSource === 'custom' && (
-                    <div className="mt-4 pt-4 border-t border-border space-y-4" onClick={(e) => e.stopPropagation()}>
-                      {/* Provider */}
-                      <div>
-                        <label className="block text-xs text-muted-foreground mb-1.5">Provider</label>
-                        <select
-                          value={provider}
-                          onChange={(e) => {
-                            const next = e.target.value as any
-                            setProvider(next)
-                            setValidationResult(null)
-                            if (next === 'anthropic') {
-                              if (!apiUrl || apiUrl.includes('openai')) setApiUrl('https://api.anthropic.com')
-                              if (!model || !model.startsWith('claude-')) {
-                                setModel(DEFAULT_MODEL)
-                                setUseCustomModel(false)
-                              }
-                            } else if (next === 'openai') {
-                              if (!apiUrl || apiUrl.includes('anthropic')) setApiUrl('https://api.openai.com')
-                              if (!model || model.startsWith('claude-')) setModel('gpt-4o-mini')
-                            }
-                          }}
-                          className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                        >
-                          <option value="anthropic">{t('Claude (Recommended)')}</option>
-                          <option value="openai">{t('OpenAI Compatible')}</option>
-                        </select>
-                      </div>
-
-                      {/* API Key */}
-                      <div>
-                        <label className="block text-xs text-muted-foreground mb-1.5">API Key</label>
-                        <div className="relative">
-                          <input
-                            type={showApiKey ? 'text' : 'password'}
-                            value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
-                            placeholder={provider === 'openai' ? 'sk-xxxxxxxxxxxxx' : 'sk-ant-xxxxxxxxxxxxx'}
-                            className="w-full px-3 py-1.5 pr-10 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                          />
+                        <div className="flex items-center gap-1">
                           <button
-                            type="button"
-                            onClick={() => setShowApiKey(!showApiKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditCustom(key, sourceConfig)
+                            }}
+                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+                            title={t('Edit')}
                           >
-                            {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          {/* Allow deleting any custom source except maybe if it's the only one? Or just allow deleting */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (window.confirm(t('Are you sure you want to delete this configuration?'))) {
+                                handleDeleteCustom(key)
+                              }
+                            }}
+                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                            title={t('Delete')}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
 
-                      {/* API URL */}
-                      <div>
-                        <label className="block text-xs text-muted-foreground mb-1.5">API URL</label>
-                        <input
-                          type="text"
-                          value={apiUrl}
-                          onChange={(e) => setApiUrl(e.target.value)}
-                          placeholder="https://api.anthropic.com"
-                          className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                        />
-                      </div>
+                      {/* Edit Form (Expanded) */}
+                      {isEditing && (
+                        <div className="p-4 pt-0 border-t border-border mt-4" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-4 pt-4">
+                            {/* Name */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">{t('Name')}</label>
+                              <input
+                                type="text"
+                                value={customName}
+                                onChange={(e) => setCustomName(e.target.value)}
+                                placeholder={t('My Custom API')}
+                                className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                              />
+                            </div>
 
-                      {/* Model */}
-                      <div>
-                        <label className="block text-xs text-muted-foreground mb-1.5">{t('Model')}</label>
-                        {provider === 'anthropic' && !useCustomModel ? (
-                          <select
-                            value={model}
-                            onChange={(e) => setModel(e.target.value)}
-                            className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                          >
-                            {AVAILABLE_MODELS.map((m) => (
-                              <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type="text"
-                            value={model}
-                            onChange={(e) => setModel(e.target.value)}
-                            placeholder="claude-sonnet-4-5-20250929"
-                            className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                          />
-                        )}
-                      </div>
+                            {/* Provider */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">Provider</label>
+                              <select
+                                value={provider}
+                                onChange={(e) => {
+                                  const next = e.target.value as any
+                                  setProvider(next)
+                                  setValidationResult(null)
+                                  if (next === 'anthropic') {
+                                    if (!apiUrl || apiUrl.includes('openai')) setApiUrl('https://api.anthropic.com')
+                                    if (!model || !model.startsWith('claude-')) {
+                                      setModel(DEFAULT_MODEL)
+                                      setUseCustomModel(false)
+                                    }
+                                  } else if (next === 'openai') {
+                                    if (!apiUrl || apiUrl.includes('anthropic')) setApiUrl('https://api.openai.com')
+                                    if (!model || model.startsWith('claude-')) setModel('gpt-4o-mini')
+                                  }
+                                }}
+                                className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                              >
+                                <option value="anthropic">{t('Claude (Recommended)')}</option>
+                                <option value="openai">{t('OpenAI Compatible')}</option>
+                              </select>
+                            </div>
 
-                      {/* Save button */}
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={handleSaveCustomApi}
-                          disabled={isValidating || !apiKey}
-                          className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                        >
-                          {isValidating ? t('Saving...') : t('Save')}
-                        </button>
-                        {validationResult && (
-                          <span className={`text-xs flex items-center gap-1 ${validationResult.valid ? 'text-green-500' : 'text-red-500'}`}>
-                            {validationResult.valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-                            {validationResult.message}
-                          </span>
-                        )}
-                      </div>
+                            {/* API Key */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">API Key</label>
+                              <div className="relative">
+                                <input
+                                  type={showApiKey ? 'text' : 'password'}
+                                  value={apiKey}
+                                  onChange={(e) => setApiKey(e.target.value)}
+                                  placeholder={provider === 'openai' ? 'sk-xxxxxxxxxxxxx' : 'sk-ant-xxxxxxxxxxxxx'}
+                                  className="w-full px-3 py-1.5 pr-10 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowApiKey(!showApiKey)}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* API URL */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">API URL</label>
+                              <input
+                                type="text"
+                                value={apiUrl}
+                                onChange={(e) => setApiUrl(e.target.value)}
+                                placeholder="https://api.anthropic.com"
+                                className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                              />
+                            </div>
+
+                            {/* Model */}
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1.5">{t('Model')}</label>
+                              {provider === 'anthropic' && !useCustomModel ? (
+                                <select
+                                  value={model}
+                                  onChange={(e) => setModel(e.target.value)}
+                                  className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                                >
+                                  {AVAILABLE_MODELS.map((m) => (
+                                    <option key={m.id} value={m.id}>{m.name}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    {fetchedModels.length > 0 ? (
+                                      <select
+                                        value={model}
+                                        onChange={(e) => setModel(e.target.value)}
+                                        className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors appearance-none"
+                                      >
+                                        {!fetchedModels.includes(model) && model && (
+                                          <option value={model}>{model}</option>
+                                        )}
+                                        {fetchedModels.map((m) => (
+                                          <option key={m} value={m}>
+                                            {m}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : (
+                                      <input
+                                        type="text"
+                                        value={model}
+                                        onChange={(e) => setModel(e.target.value)}
+                                        placeholder={provider === 'openai' ? "gpt-4o-mini" : "claude-sonnet"}
+                                        className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                                      />
+                                    )}
+                                    {fetchedModels.length > 0 && (
+                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                        <ChevronDown className="w-3.5 h-3.5" />
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={fetchModels}
+                                    disabled={isFetchingModels || !apiKey || !apiUrl}
+                                    className="px-2.5 py-1.5 bg-secondary hover:bg-secondary/80 text-foreground rounded-lg border border-border transition-colors disabled:opacity-50"
+                                    title={t('Fetch available models')}
+                                  >
+                                    <RefreshCw className={`w-3.5 h-3.5 ${isFetchingModels ? 'animate-spin' : ''}`} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Save/Cancel button */}
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={handleSaveCustomApi}
+                                disabled={isValidating || !apiKey}
+                                className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                              >
+                                {isValidating ? t('Saving...') : t('Save')}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowCustomApiForm(false)
+                                  setEditingKey(null)
+                                }}
+                                className="px-4 py-1.5 text-sm text-muted-foreground hover:bg-secondary rounded-lg transition-colors"
+                              >
+                                {t('Cancel')}
+                              </button>
+                              {validationResult && (
+                                <span className={`text-xs flex items-center gap-1 ${validationResult.valid ? 'text-green-500' : 'text-red-500'}`}>
+                                  {validationResult.valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                                  {validationResult.message}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ) : (
-                /* Add Custom API Button */
+                  )
+                })}
+
+              {/* Add Custom API Button (Always visible at bottom) */}
+              {!showCustomApiForm || editingKey !== null ? (
                 <button
-                  onClick={() => setShowCustomApiForm(true)}
+                  onClick={handleAddCustom}
                   className="w-full p-4 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center gap-3"
                 >
                   <div className="w-10 h-10 rounded-lg bg-[#da7756]/10 flex items-center justify-center">
@@ -847,111 +1131,173 @@ export function SettingsPage() {
                   </div>
                   <div className="text-left">
                     <span className="font-medium">{t('Add Custom API')}</span>
-                    <p className="text-xs text-muted-foreground">{t('Claude / OpenAI compatible')}</p>
+                    <p className="text-xs text-muted-foreground">{t('Connect to OpenAI, Local LLMs, etc.')}</p>
                   </div>
                 </button>
-              )}
-
-              {/* Add Custom API Form (when no existing custom config) */}
-              {showCustomApiForm && !config?.aiSources?.custom?.apiKey && (
+              ) : (
+                /* Creating New Form */
                 <div className="p-4 rounded-lg border border-border space-y-4">
-                  <h3 className="font-medium">{t('Configure Custom API')}</h3>
+                  <h3 className="font-medium">{t('Configure New API')}</h3>
 
-                  {/* Provider */}
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1.5">Provider</label>
-                    <select
-                      value={provider}
-                      onChange={(e) => {
-                        const next = e.target.value as any
-                        setProvider(next)
-                        if (next === 'anthropic') {
-                          setApiUrl('https://api.anthropic.com')
-                          setModel(DEFAULT_MODEL)
-                        } else {
-                          setApiUrl('https://api.openai.com')
-                          setModel('gpt-4o-mini')
-                        }
-                      }}
-                      className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                    >
-                      <option value="anthropic">{t('Claude (Recommended)')}</option>
-                      <option value="openai">{t('OpenAI Compatible')}</option>
-                    </select>
-                  </div>
-
-                  {/* API Key */}
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1.5">API Key</label>
-                    <div className="relative">
-                      <input
-                        type={showApiKey ? 'text' : 'password'}
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder={provider === 'openai' ? 'sk-xxxxxxxxxxxxx' : 'sk-ant-xxxxxxxxxxxxx'}
-                        className="w-full px-3 py-1.5 pr-10 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* API URL */}
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1.5">API URL</label>
-                    <input
-                      type="text"
-                      value={apiUrl}
-                      onChange={(e) => setApiUrl(e.target.value)}
-                      placeholder="https://api.anthropic.com"
-                      className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                    />
-                  </div>
-
-                  {/* Model */}
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1.5">{t('Model')}</label>
-                    {provider === 'anthropic' ? (
-                      <select
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
-                      >
-                        {AVAILABLE_MODELS.map((m) => (
-                          <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
-                      </select>
-                    ) : (
+                  {/* Reuse Form Logic - Ideally this should be a component, but copying for now to ensure speed */}
+                  <div className="space-y-4 pt-2">
+                    {/* Name */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1.5">{t('Name')}</label>
                       <input
                         type="text"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        placeholder="gpt-4o-mini"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder={t('My Custom API')}
                         className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
                       />
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSaveCustomApi}
-                      disabled={isValidating || !apiKey}
-                      className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                    >
-                      {isValidating ? t('Saving...') : t('Save')}
-                    </button>
-                    <button
-                      onClick={() => setShowCustomApiForm(false)}
-                      className="px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {t('Cancel')}
-                    </button>
+                    {/* Provider */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1.5">Provider</label>
+                      <select
+                        value={provider}
+                        onChange={(e) => {
+                          const next = e.target.value as any
+                          setProvider(next)
+                          setValidationResult(null)
+                          if (next === 'anthropic') {
+                            if (!apiUrl || apiUrl.includes('openai')) setApiUrl('https://api.anthropic.com')
+                            if (!model || !model.startsWith('claude-')) {
+                              setModel(DEFAULT_MODEL)
+                              setUseCustomModel(false)
+                            }
+                          } else if (next === 'openai') {
+                            if (!apiUrl || apiUrl.includes('anthropic')) setApiUrl('https://api.openai.com')
+                            if (!model || model.startsWith('claude-')) setModel('gpt-4o-mini')
+                          }
+                        }}
+                        className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                      >
+                        <option value="anthropic">{t('Claude (Recommended)')}</option>
+                        <option value="openai">{t('OpenAI Compatible')}</option>
+                      </select>
+                    </div>
+
+                    {/* API Key */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1.5">API Key</label>
+                      <div className="relative">
+                        <input
+                          type={showApiKey ? 'text' : 'password'}
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder={provider === 'openai' ? 'sk-xxxxxxxxxxxxx' : 'sk-ant-xxxxxxxxxxxxx'}
+                          className="w-full px-3 py-1.5 pr-10 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* API URL */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1.5">API URL</label>
+                      <input
+                        type="text"
+                        value={apiUrl}
+                        onChange={(e) => setApiUrl(e.target.value)}
+                        placeholder="https://api.anthropic.com"
+                        className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* Model */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1.5">{t('Model')}</label>
+                      {provider === 'anthropic' && !useCustomModel ? (
+                        <select
+                          value={model}
+                          onChange={(e) => setModel(e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                        >
+                          {AVAILABLE_MODELS.map((m) => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            {fetchedModels.length > 0 ? (
+                              <select
+                                value={model}
+                                onChange={(e) => setModel(e.target.value)}
+                                className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors appearance-none"
+                              >
+                                {!fetchedModels.includes(model) && model && (
+                                  <option value={model}>{model}</option>
+                                )}
+                                {fetchedModels.map((m) => (
+                                  <option key={m} value={m}>
+                                    {m}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={model}
+                                onChange={(e) => setModel(e.target.value)}
+                                placeholder={provider === 'openai' ? "gpt-4o-mini" : "claude-sonnet"}
+                                className="w-full px-3 py-1.5 text-sm bg-input rounded-lg border border-border focus:border-primary focus:outline-none transition-colors"
+                              />
+                            )}
+                            {fetchedModels.length > 0 && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </div>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={fetchModels}
+                            disabled={isFetchingModels || !apiKey || !apiUrl}
+                            className="px-2.5 py-1.5 bg-secondary hover:bg-secondary/80 text-foreground rounded-lg border border-border transition-colors disabled:opacity-50"
+                            title={t('Fetch available models')}
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isFetchingModels ? 'animate-spin' : ''}`} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Save/Cancel button */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSaveCustomApi}
+                        disabled={isValidating || !apiKey}
+                        className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {isValidating ? t('Saving...') : t('Save')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCustomApiForm(false)
+                          setEditingKey(null)
+                        }}
+                        className="px-4 py-1.5 text-sm text-muted-foreground hover:bg-secondary rounded-lg transition-colors"
+                      >
+                        {t('Cancel')}
+                      </button>
+                      {validationResult && (
+                        <span className={`text-xs flex items-center gap-1 ${validationResult.valid ? 'text-green-500' : 'text-red-500'}`}>
+                          {validationResult.valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                          {validationResult.message}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
