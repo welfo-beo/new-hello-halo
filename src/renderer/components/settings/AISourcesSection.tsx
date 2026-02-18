@@ -29,15 +29,11 @@ import { getBuiltinProvider, isOAuthProvider as isOAuthProviderFn } from '../../
 import { useTranslation, getCurrentLanguage } from '../../i18n'
 import { api } from '../../api'
 import { ProviderSelector } from './ProviderSelector'
+import { resolveLocalizedText, type LocalizedText } from '../../../shared/types'
 
 // ============================================================================
 // Types for dynamic OAuth providers (from product.json)
 // ============================================================================
-
-/**
- * Localized text - either a simple string or object with language codes
- */
-type LocalizedText = string | Record<string, string>
 
 /**
  * Provider configuration from backend (product.json)
@@ -57,15 +53,8 @@ interface AuthProviderConfig {
 // Helper functions for dynamic providers
 // ============================================================================
 
-/**
- * Get localized text based on current language
- */
 function getLocalizedText(value: LocalizedText): string {
-  if (typeof value === 'string') {
-    return value
-  }
-  const lang = getCurrentLanguage()
-  return value[lang] || value['en'] || Object.values(value)[0] || ''
+  return resolveLocalizedText(value, getCurrentLanguage())
 }
 
 /**

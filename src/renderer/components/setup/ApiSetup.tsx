@@ -254,18 +254,6 @@ export function ApiSetup({ onBack, showBack = false }: ApiSetupProps) {
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center bg-background p-8 relative overflow-auto">
-      {/* Back Button - Top Left (when showBack is true) */}
-      {showBack && onBack && (
-        <div className="absolute top-6 left-6">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Language Selector - Top Right */}
       <div className="absolute top-6 right-6">
         <div className="relative">
@@ -314,9 +302,21 @@ export function ApiSetup({ onBack, showBack = false }: ApiSetupProps) {
 
       {/* Main content */}
       <div className="w-full max-w-md">
-        <h2 className="text-center text-lg mb-6">
-          {showBack ? t('Configure Custom API') : t('Before you start, configure your AI')}
-        </h2>
+        <div className="relative mb-6">
+          {/* Back Button - inline left of title */}
+          {showBack && onBack && (
+            <button
+              onClick={onBack}
+              className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/80 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>{t('Back')}</span>
+            </button>
+          )}
+          <h2 className="text-center text-lg">
+            {showBack ? t('Configure Custom API') : t('Before you start, configure your AI')}
+          </h2>
+        </div>
 
         <div className="bg-card rounded-xl p-6 border border-border">
           {/* Provider */}

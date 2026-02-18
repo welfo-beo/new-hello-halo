@@ -7,11 +7,7 @@ import { useState, useEffect } from 'react'
 import { Globe, ChevronDown, ChevronRight, MessageSquare, Wrench, Key, Cloud, Server, Shield, Lock, Zap, LogIn, User, Github, type LucideIcon } from 'lucide-react'
 import { useTranslation, setLanguage, getCurrentLanguage, SUPPORTED_LOCALES, type LocaleCode } from '../../i18n'
 import { api } from '../../api'
-
-/**
- * Localized text - either a simple string or object with language codes
- */
-type LocalizedText = string | Record<string, string>
+import { resolveLocalizedText, type LocalizedText } from '../../../shared/types'
 
 /**
  * Provider configuration from backend
@@ -26,16 +22,8 @@ interface AuthProviderConfig {
   enabled: boolean
 }
 
-/**
- * Get localized text based on current language
- * Supports both string and { "en": "...", "zh-CN": "..." } formats
- */
 function getLocalizedText(value: LocalizedText): string {
-  if (typeof value === 'string') {
-    return value
-  }
-  const lang = getCurrentLanguage()
-  return value[lang] || value['en'] || Object.values(value)[0] || ''
+  return resolveLocalizedText(value, getCurrentLanguage())
 }
 
 interface LoginSelectorProps {

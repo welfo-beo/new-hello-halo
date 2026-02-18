@@ -14,16 +14,11 @@ import { pathToFileURL } from 'url'
 import { existsSync } from 'fs'
 import { app } from 'electron'
 import type { AISourceProvider, OAuthAISourceProvider } from '../../../shared/interfaces'
-import type { AISourceType } from '../../../shared/types'
+import { type AISourceType, type LocalizedText } from '../../../shared/types'
 
 // ============================================================================
 // Types
 // ============================================================================
-
-/**
- * Localized text - either a simple string or object with language codes
- */
-export type LocalizedText = string | Record<string, string>
 
 /**
  * Provider configuration from product.json

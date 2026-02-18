@@ -18,6 +18,28 @@
 import { v4 as uuidv4 } from 'uuid'
 
 // ============================================================================
+// Localization Utilities
+// ============================================================================
+
+/**
+ * Localized text - either a plain string or an object keyed by locale code
+ */
+export type LocalizedText = string | Record<string, string>
+
+/**
+ * Resolve LocalizedText to a string for the given locale.
+ * Falls back: exact match -> prefix match -> 'en' -> first value.
+ */
+export function resolveLocalizedText(value: LocalizedText, locale: string): string {
+  if (typeof value === 'string') return value
+  if (value[locale]) return value[locale]
+  const prefix = locale.split('-')[0]
+  const match = Object.keys(value).find(k => k.startsWith(prefix))
+  if (match) return value[match]
+  return value['en'] || Object.values(value)[0] || ''
+}
+
+// ============================================================================
 // Core Enums and Constants
 // ============================================================================
 

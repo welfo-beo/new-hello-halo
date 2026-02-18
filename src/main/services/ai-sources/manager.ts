@@ -16,6 +16,7 @@
  * - Supports v2 AISourcesConfig format
  */
 
+import { app } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
 import type {
   AISourceProvider,
@@ -25,6 +26,7 @@ import type {
 import {
   getCurrentSource,
   createEmptyAISourcesConfig,
+  resolveLocalizedText,
   type AISourceType,
   type AISourcesConfig,
   type AISource,
@@ -38,7 +40,7 @@ import { getBuiltinProvider, isAnthropicProvider } from '../../../shared/constan
 import { getConfig, saveConfig } from '../config.service'
 import { getCustomProvider } from './providers/custom.provider'
 import { getGitHubCopilotProvider } from './providers/github-copilot.provider'
-import { loadAuthProvidersAsync } from './auth-loader'
+import { loadAuthProvidersAsync, loadProductConfig } from './auth-loader'
 import { decryptString } from '../secure-storage.service'
 import { normalizeApiUrl } from '../../openai-compat-router'
 
@@ -52,6 +54,16 @@ interface OAuthProviderWithTokenManagement extends OAuthAISourceProvider {
     refreshToken: string
     expiresAt: number
   }>>
+}
+
+/**
+ * Get display name for a provider type from product.json config
+ */
+function getProviderDisplayName(providerType: ProviderId): string {
+  const config = loadProductConfig()
+  const provider = config.authProviders.find(p => p.type === providerType)
+  if (provider?.displayName) return resolveLocalizedText(provider.displayName, app.getLocale())
+  return providerType
 }
 
 /**
@@ -448,7 +460,7 @@ class AISourceManager {
       sourceId = uuidv4()
       const newSource: AISource = {
         id: sourceId,
-        name: builtin?.name || providerType,
+        name: builtin?.name || getProviderDisplayName(providerType),
         provider: providerType,
         authType: 'oauth',
         apiUrl: '',

@@ -24,7 +24,8 @@ export type {
   OAuthStartResult,
   OAuthCompleteResult,
   AISourceType,
-  AISourceUserInfo
+  AISourceUserInfo,
+  LocalizedText
 } from './ai-sources'
 
 // AI Sources - export constants and functions
@@ -43,7 +44,8 @@ export {
   deleteSource,
   setCurrentSource,
   setCurrentModel,
-  getAvailableModels
+  getAvailableModels,
+  resolveLocalizedText
 } from './ai-sources'
 
 // Health System types
