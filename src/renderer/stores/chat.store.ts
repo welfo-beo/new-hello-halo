@@ -137,7 +137,7 @@ interface ChatState {
   toggleStarConversation: (spaceId: string, conversationId: string, starred: boolean) => Promise<boolean>
 
   // Messaging
-  sendMessage: (content: string, images?: ImageAttachment[], aiBrowserEnabled?: boolean, thinkingEnabled?: boolean) => Promise<void>
+  sendMessage: (content: string, images?: ImageAttachment[], aiBrowserEnabled?: boolean, thinkingMode?: string, effort?: string) => Promise<void>
   stopGeneration: (conversationId?: string) => Promise<void>
 
   // Tool approval
@@ -667,7 +667,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   // Send message (with optional images for multi-modal, optional AI Browser and thinking mode)
-  sendMessage: async (content, images, aiBrowserEnabled, thinkingEnabled) => {
+  sendMessage: async (content, images, aiBrowserEnabled, thinkingMode, effort) => {
     const conversation = get().getCurrentConversation()
     const conversationMeta = get().getCurrentConversationMeta()
     const { currentSpaceId } = get()
@@ -767,15 +767,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
 
-      // Send to agent (with images, AI Browser state, thinking mode, and canvas context)
+      // Send to agent (with images, AI Browser state, thinking mode, effort, and canvas context)
       await api.sendMessage({
         spaceId: currentSpaceId,
         conversationId,
         message: content,
-        images: images,  // Pass images to API
-        aiBrowserEnabled,  // Pass AI Browser state to API
-        thinkingEnabled,  // Pass thinking mode to API
-        canvasContext: buildCanvasContext()  // Pass canvas context for AI awareness
+        images: images,
+        aiBrowserEnabled,
+        thinkingMode: thinkingMode as any,
+        effort: effort as any,
+        canvasContext: buildCanvasContext()
       })
     } catch (error) {
       console.error('Failed to send message:', error)

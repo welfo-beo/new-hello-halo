@@ -20,7 +20,7 @@
  */
 
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent, DragEvent } from 'react'
-import { Plus, ImagePlus, Loader2, AlertCircle, Atom, Globe } from 'lucide-react'
+import { Plus, ImagePlus, Loader2, AlertCircle, Atom, Globe, Gauge } from 'lucide-react'
 import { useOnboardingStore } from '../../stores/onboarding.store'
 import { useAIBrowserStore } from '../../stores/ai-browser.store'
 import { getOnboardingPrompt } from '../onboarding/onboardingData'
@@ -29,8 +29,11 @@ import { processImage, isValidImageType, formatFileSize } from '../../utils/imag
 import type { ImageAttachment } from '../../types'
 import { useTranslation } from '../../i18n'
 
+type ThinkingMode = 'disabled' | 'enabled' | 'adaptive'
+type EffortLevel = 'max' | 'high' | 'medium' | 'low'
+
 interface InputAreaProps {
-  onSend: (content: string, images?: ImageAttachment[], thinkingEnabled?: boolean) => void
+  onSend: (content: string, images?: ImageAttachment[], thinkingMode?: ThinkingMode, effort?: EffortLevel) => void
   onStop: () => void
   isGenerating: boolean
   placeholder?: string
@@ -55,11 +58,14 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
   const [isDragOver, setIsDragOver] = useState(false)
   const [isProcessingImages, setIsProcessingImages] = useState(false)
   const [imageError, setImageError] = useState<ImageError | null>(null)
-  const [thinkingEnabled, setThinkingEnabled] = useState(false)  // Extended thinking mode
+  const [thinkingMode, setThinkingMode] = useState<ThinkingMode>('disabled')
+  const [effort, setEffort] = useState<EffortLevel>('high')
+  const [showEffortMenu, setShowEffortMenu] = useState(false)
   const [showAttachMenu, setShowAttachMenu] = useState(false)  // Attachment menu visibility
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const attachMenuRef = useRef<HTMLDivElement>(null)
+  const effortMenuRef = useRef<HTMLDivElement>(null)
 
   // AI Browser state
   const { enabled: aiBrowserEnabled, setEnabled: setAIBrowserEnabled } = useAIBrowserStore()
@@ -72,19 +78,22 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
     }
   }, [imageError])
 
-  // Close attachment menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (attachMenuRef.current && !attachMenuRef.current.contains(event.target as Node)) {
         setShowAttachMenu(false)
       }
+      if (effortMenuRef.current && !effortMenuRef.current.contains(event.target as Node)) {
+        setShowEffortMenu(false)
+      }
     }
 
-    if (showAttachMenu) {
+    if (showAttachMenu || showEffortMenu) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showAttachMenu])
+  }, [showAttachMenu, showEffortMenu])
 
   // Show error to user
   const showError = (message: string) => {
@@ -243,7 +252,12 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
     const hasContent = textToSend || images.length > 0
 
     if (hasContent && !isGenerating) {
-      onSend(textToSend, images.length > 0 ? images : undefined, thinkingEnabled)
+      onSend(
+        textToSend,
+        images.length > 0 ? images : undefined,
+        thinkingMode,
+        effort !== 'high' ? effort : undefined  // Only pass if not default
+      )
 
       if (!isOnboardingSendStep) {
         setContent('')
@@ -382,8 +396,13 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
             isGenerating={isGenerating}
             isOnboarding={isOnboardingSendStep}
             isProcessingImages={isProcessingImages}
-            thinkingEnabled={thinkingEnabled}
-            onThinkingToggle={() => setThinkingEnabled(!thinkingEnabled)}
+            thinkingMode={thinkingMode}
+            onThinkingModeChange={(mode) => setThinkingMode(mode)}
+            effort={effort}
+            onEffortChange={(level) => { setEffort(level); setShowEffortMenu(false) }}
+            showEffortMenu={showEffortMenu}
+            onEffortMenuToggle={() => setShowEffortMenu(!showEffortMenu)}
+            effortMenuRef={effortMenuRef}
             aiBrowserEnabled={aiBrowserEnabled}
             onAIBrowserToggle={() => setAIBrowserEnabled(!aiBrowserEnabled)}
             showAttachMenu={showAttachMenu}
@@ -412,8 +431,13 @@ interface InputToolbarProps {
   isGenerating: boolean
   isOnboarding: boolean
   isProcessingImages: boolean
-  thinkingEnabled: boolean
-  onThinkingToggle: () => void
+  thinkingMode: ThinkingMode
+  onThinkingModeChange: (mode: ThinkingMode) => void
+  effort: EffortLevel
+  onEffortChange: (level: EffortLevel) => void
+  showEffortMenu: boolean
+  onEffortMenuToggle: () => void
+  effortMenuRef: React.RefObject<HTMLDivElement | null>
   aiBrowserEnabled: boolean
   onAIBrowserToggle: () => void
   showAttachMenu: boolean
@@ -431,8 +455,13 @@ function InputToolbar({
   isGenerating,
   isOnboarding,
   isProcessingImages,
-  thinkingEnabled,
-  onThinkingToggle,
+  thinkingMode,
+  onThinkingModeChange,
+  effort,
+  onEffortChange,
+  showEffortMenu,
+  onEffortMenuToggle,
+  effortMenuRef,
   aiBrowserEnabled,
   onAIBrowserToggle,
   showAttachMenu,
@@ -520,22 +549,69 @@ function InputToolbar({
           </button>
         )}
 
-        {/* Thinking mode toggle - always show full label, no expansion */}
+        {/* Thinking mode cycle: disabled -> enabled -> adaptive -> disabled */}
         {!isGenerating && !isOnboarding && (
           <button
-            onClick={onThinkingToggle}
+            onClick={() => {
+              const next: Record<ThinkingMode, ThinkingMode> = { disabled: 'enabled', enabled: 'adaptive', adaptive: 'disabled' }
+              onThinkingModeChange(next[thinkingMode])
+            }}
             className={`h-8 flex items-center gap-1.5 px-2.5 rounded-lg
               transition-colors duration-200
-              ${thinkingEnabled
+              ${thinkingMode !== 'disabled'
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
               }
             `}
-            title={thinkingEnabled ? t('Disable Deep Thinking') : t('Enable Deep Thinking')}
+            title={thinkingMode === 'disabled' ? t('Enable Thinking') : thinkingMode === 'enabled' ? t('Switch to Adaptive') : t('Disable Thinking')}
           >
             <Atom size={15} />
-            <span className="text-xs">{t('Deep Thinking')}</span>
+            <span className="text-xs">
+              {thinkingMode === 'disabled' ? t('Thinking') : thinkingMode === 'enabled' ? t('Thinking') : t('Adaptive')}
+            </span>
+            {thinkingMode !== 'disabled' && (
+              <span className="text-[10px] opacity-70">
+                {thinkingMode === 'enabled' ? 'ON' : 'AUTO'}
+              </span>
+            )}
           </button>
+        )}
+
+        {/* Effort level selector */}
+        {!isGenerating && !isOnboarding && (
+          <div className="relative" ref={effortMenuRef}>
+            <button
+              onClick={onEffortMenuToggle}
+              className={`h-8 flex items-center gap-1.5 px-2.5 rounded-lg
+                transition-colors duration-200
+                ${effort !== 'high'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
+                }
+              `}
+              title={t('Effort: {{level}}', { level: effort })}
+            >
+              <Gauge size={15} />
+              <span className="text-xs capitalize">{effort}</span>
+            </button>
+            {showEffortMenu && (
+              <div className="absolute bottom-full left-0 mb-2 py-1.5 bg-popover border border-border
+                rounded-xl shadow-lg min-w-[140px] z-20 animate-fade-in">
+                {(['low', 'medium', 'high', 'max'] as EffortLevel[]).map(level => (
+                  <button
+                    key={level}
+                    onClick={() => onEffortChange(level)}
+                    className={`w-full px-3 py-1.5 flex items-center gap-2 text-sm transition-colors
+                      ${effort === level ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted/50'}
+                    `}
+                  >
+                    <span className="capitalize">{level}</span>
+                    {effort === level && <span className="ml-auto text-xs">&#10003;</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -564,7 +640,7 @@ function InputToolbar({
                 : 'bg-muted/50 text-muted-foreground/40 cursor-not-allowed'
               }
             `}
-            title={thinkingEnabled ? t('Send (Deep Thinking)') : t('Send')}
+            title={thinkingMode !== 'disabled' ? t('Send (Thinking)') : t('Send')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
