@@ -205,6 +205,8 @@ export type V2SDKSession = {
  */
 export interface SessionConfig {
   aiBrowserEnabled: boolean
+  effort: EffortLevel | null
+  subagentsSignature: string
   // thinkingEnabled is dynamic via setMaxThinkingTokens, no rebuild needed
 }
 

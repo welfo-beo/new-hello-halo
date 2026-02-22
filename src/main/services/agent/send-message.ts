@@ -62,6 +62,22 @@ const FALLBACK_ERROR_HINT = 'Check logs in Settings > System > Logs.'
 // Send Message
 // ============================================
 
+function createSubagentsSignature(subagents: AgentRequest['subagents']): string {
+  if (!subagents || subagents.length === 0) {
+    return ''
+  }
+
+  const normalized = subagents.map((agent) => ({
+    name: agent.name,
+    description: agent.description,
+    prompt: agent.prompt,
+    tools: agent.tools ? [...agent.tools].sort() : [],
+    model: agent.model || 'inherit'
+  })).sort((a, b) => a.name.localeCompare(b.name))
+
+  return JSON.stringify(normalized)
+}
+
 /**
  * Send message to agent (supports multiple concurrent sessions)
  *
@@ -215,7 +231,9 @@ export async function sendMessage(
 
     // Session config for rebuild detection
     const sessionConfig: SessionConfig = {
-      aiBrowserEnabled: !!aiBrowserEnabled
+      aiBrowserEnabled: !!aiBrowserEnabled,
+      effort: effort || null,
+      subagentsSignature: createSubagentsSignature(subagents)
     }
 
     // Get or create persistent V2 session for this conversation
