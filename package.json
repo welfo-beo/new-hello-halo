@@ -152,8 +152,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "openkursar",
-      "repo": "hello-halo",
+      "owner": "welfo-beo",
+      "repo": "new-hello-halo",
       "releaseType": "release"
     },
     "mac": {

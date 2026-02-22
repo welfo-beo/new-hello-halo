@@ -11,10 +11,10 @@
 
 > **我們的理念：** 將複雜技術封裝成符合直覺的人類互動。
 
-[![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/welfo-beo/new-hello-halo?style=social)](https://github.com/welfo-beo/new-hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#安裝)
-[![Downloads](https://img.shields.io/github/downloads/openkursar/hello-halo/total.svg)](https://github.com/openkursar/hello-halo/releases)
+[![Downloads](https://img.shields.io/github/downloads/welfo-beo/new-hello-halo/total.svg)](https://github.com/welfo-beo/new-hello-halo/releases)
 
 [下載](#安裝) · [文件](#文件) · [參與貢獻](#參與貢獻)
 
@@ -125,10 +125,10 @@
 
 | 平台 | 下載 | 要求 |
 |----------|----------|--------------|
-| **macOS** (Apple Silicon) | [下載 .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | [下載 .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **Windows** | [下載 .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
-| **Linux** | [下載 .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
+| **macOS** (Apple Silicon) | [下載 .dmg](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **macOS** (Intel) | [下載 .dmg](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **Windows** | [下載 .exe](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Windows 10+ |
+| **Linux** | [下載 .AppImage](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/行動端) | 在桌面應用程式中啟用遠端存取 | 任何現代瀏覽器 |
 
 **就這麼簡單。** 下載、安裝、執行。不需要 Node.js，不需要 npm，不需要終端命令。
@@ -138,7 +138,7 @@
 想要貢獻或自訂的開發者：
 
 ```bash
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run dev
@@ -223,7 +223,7 @@ Halo 開源是因為 AI 應該人人可及。
 
 ```bash
 # 開發環境設定
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run dev
@@ -235,8 +235,8 @@ npm run dev
 
 ## 社群
 
-- [GitHub Discussions](https://github.com/openkursar/hello-halo/discussions) — 問題與想法
-- [Issues](https://github.com/openkursar/hello-halo/issues) — Bug 報告與功能請求
+- [GitHub Discussions](https://github.com/welfo-beo/new-hello-halo/discussions) — 問題與想法
+- [Issues](https://github.com/welfo-beo/new-hello-halo/issues) — Bug 報告與功能請求
 
 ---
 
@@ -252,7 +252,7 @@ MIT 授權條款 — 詳見 [LICENSE](../LICENSE)。
 
 - **給我們一個 Star** — 幫助更多人發現 Halo
 - **分享你的故事** — 我們很想知道你做了什麼
-- **提及我們** — 例如 `Inspired by [Halo](https://github.com/openkursar/hello-halo)`
+- **提及我們** — 例如 `Inspired by [Halo](https://github.com/welfo-beo/new-hello-halo)`
 
 ---
 
@@ -277,8 +277,8 @@ AI 建構 AI。現在人人可用。
 
 ## 貢獻者
 
-<a href="https://github.com/openkursar/hello-halo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=openkursar/hello-halo" />
+<a href="https://github.com/welfo-beo/new-hello-halo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=welfo-beo/new-hello-halo" />
 </a>
 
 Made with ❤️ by our contributors.
@@ -291,7 +291,7 @@ Made with ❤️ by our contributors.
 
 **Star 這個儲存庫** 幫助更多人發現 Halo。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=openkursar/hello-halo&type=Date)](https://star-history.com/#openkursar/hello-halo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=welfo-beo/new-hello-halo&type=Date)](https://star-history.com/#welfo-beo/new-hello-halo&Date)
 
 [⬆ 返回頂部](#halo)
 

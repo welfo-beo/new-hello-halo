@@ -10,7 +10,7 @@ Thanks for your interest in contributing to Halo! This guide will help you get s
 
 ```bash
 # Clone the repository
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 
 # Install dependencies
@@ -108,7 +108,7 @@ git checkout -b feat/new-feature-name
 
 ### 2. Find or Create an Issue
 
-- Check existing [Issues](https://github.com/openkursar/hello-halo/issues)
+- Check existing [Issues](https://github.com/welfo-beo/new-hello-halo/issues)
 - Create a new issue if needed
 - Comment on the issue to let us know you're working on it
 
@@ -178,7 +178,7 @@ See **[docs/custom-providers.md](docs/custom-providers.md)** for the complete gu
 
 ## Questions?
 
-- Open a [GitHub Discussion](https://github.com/openkursar/hello-halo/discussions)
-- Check existing [Issues](https://github.com/openkursar/hello-halo/issues)
+- Open a [GitHub Discussion](https://github.com/welfo-beo/new-hello-halo/discussions)
+- Check existing [Issues](https://github.com/welfo-beo/new-hello-halo/issues)
 
 Thank you for contributing!

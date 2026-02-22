@@ -11,10 +11,10 @@
 
 > **我们的理念：** 将复杂技术封装成符合直觉的人类交互。
 
-[![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/welfo-beo/new-hello-halo?style=social)](https://github.com/welfo-beo/new-hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#安装)
-[![Downloads](https://img.shields.io/github/downloads/openkursar/hello-halo/total.svg)](https://github.com/openkursar/hello-halo/releases)
+[![Downloads](https://img.shields.io/github/downloads/welfo-beo/new-hello-halo/total.svg)](https://github.com/welfo-beo/new-hello-halo/releases)
 
 [下载](#安装) · [文档](#文档) · [参与贡献](#参与贡献)
 
@@ -135,10 +135,10 @@ https://github.com/user-attachments/assets/2d4d2f3e-d27c-44b0-8f1d-9059c8372003
 
 | 平台 | 下载 | 要求 |
 |----------|----------|--------------|
-| **macOS** (Apple Silicon) | [下载 .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | [下载 .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **Windows** | [下载 .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
-| **Linux** | [下载 .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
+| **macOS** (Apple Silicon) | [下载 .dmg](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **macOS** (Intel) | [下载 .dmg](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **Windows** | [下载 .exe](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Windows 10+ |
+| **Linux** | [下载 .AppImage](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/移动端) | 在桌面应用中启用远程访问 | 任何现代浏览器 |
 
 **就这么简单。** 下载、安装、运行。不需要 Node.js，不需要 npm，不需要终端命令。
@@ -148,7 +148,7 @@ https://github.com/user-attachments/assets/2d4d2f3e-d27c-44b0-8f1d-9059c8372003
 想要贡献或自定义的开发者：
 
 ```bash
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run prepare        # 下载当前平台的二进制依赖
@@ -236,7 +236,7 @@ Halo 开源是因为 AI 应该人人可及。
 
 ```bash
 # 开发环境设置
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run prepare        # 下载当前平台的二进制依赖
@@ -249,8 +249,8 @@ npm run dev
 
 ## 社区
 
-- [GitHub Discussions](https://github.com/openkursar/hello-halo/discussions) — 问题与想法
-- [Issues](https://github.com/openkursar/hello-halo/issues) — Bug 报告与功能请求
+- [GitHub Discussions](https://github.com/welfo-beo/new-hello-halo/discussions) — 问题与想法
+- [Issues](https://github.com/welfo-beo/new-hello-halo/issues) — Bug 报告与功能请求
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/49f1040c-b858-4d43-841b-206310d3c33f" width="200" alt="微信群二维码">
@@ -278,7 +278,7 @@ MIT 许可证 — 详见 [LICENSE](../LICENSE)。
 
 - **给我们一个 Star** — 帮助更多人发现 Halo
 - **分享你的故事** — 我们很想知道你做了什么
-- **提及我们** — 例如 `Inspired by [Halo](https://github.com/openkursar/hello-halo)`
+- **提及我们** — 例如 `Inspired by [Halo](https://github.com/welfo-beo/new-hello-halo)`
 
 ---
 
@@ -303,8 +303,8 @@ AI 构建 AI。现在人人可用。
 
 ## 贡献者
 
-<a href="https://github.com/openkursar/hello-halo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=openkursar/hello-halo" />
+<a href="https://github.com/welfo-beo/new-hello-halo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=welfo-beo/new-hello-halo" />
 </a>
 
 由我们的贡献者用 ❤️ 打造。
@@ -317,7 +317,7 @@ AI 构建 AI。现在人人可用。
 
 **Star 这个仓库** 帮助更多人发现 Halo。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=openkursar/hello-halo&type=Date)](https://star-history.com/#openkursar/hello-halo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=welfo-beo/new-hello-halo&type=Date)](https://star-history.com/#welfo-beo/new-hello-halo&Date)
 
 [⬆ 返回顶部](#halo)
 

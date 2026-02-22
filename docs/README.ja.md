@@ -11,10 +11,10 @@
 
 > **私たちの哲学：** 複雑な技術を直感的な人間のインタラクションにラップする。
 
-[![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/welfo-beo/new-hello-halo?style=social)](https://github.com/welfo-beo/new-hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#インストール)
-[![Downloads](https://img.shields.io/github/downloads/openkursar/hello-halo/total.svg)](https://github.com/openkursar/hello-halo/releases)
+[![Downloads](https://img.shields.io/github/downloads/welfo-beo/new-hello-halo/total.svg)](https://github.com/welfo-beo/new-hello-halo/releases)
 
 [ダウンロード](#インストール) · [ドキュメント](#ドキュメント) · [コントリビュート](#コントリビュート)
 
@@ -135,10 +135,10 @@ https://github.com/user-attachments/assets/2d4d2f3e-d27c-44b0-8f1d-9059c8372003
 
 | プラットフォーム | ダウンロード | 要件 |
 |----------|----------|--------------|
-| **macOS** (Apple Silicon) | [.dmg をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | [.dmg をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **Windows** | [.exe をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
-| **Linux** | [.AppImage をダウンロード](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
+| **macOS** (Apple Silicon) | [.dmg をダウンロード](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **macOS** (Intel) | [.dmg をダウンロード](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **Windows** | [.exe をダウンロード](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Windows 10+ |
+| **Linux** | [.AppImage をダウンロード](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/モバイル) | デスクトップアプリでリモートアクセスを有効化 | 最新のブラウザ |
 
 **以上です。** ダウンロード、インストール、実行。Node.js 不要。npm 不要。ターミナルコマンド不要。
@@ -148,7 +148,7 @@ https://github.com/user-attachments/assets/2d4d2f3e-d27c-44b0-8f1d-9059c8372003
 貢献やカスタマイズしたい開発者向け：
 
 ```bash
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run dev
@@ -233,7 +233,7 @@ Halo はオープンソースです。AI は誰もがアクセスできるべき
 
 ```bash
 # 開発環境セットアップ
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run dev
@@ -245,8 +245,8 @@ npm run dev
 
 ## コミュニティ
 
-- [GitHub Discussions](https://github.com/openkursar/hello-halo/discussions) — 質問＆アイデア
-- [Issues](https://github.com/openkursar/hello-halo/issues) — バグレポート＆機能リクエスト
+- [GitHub Discussions](https://github.com/welfo-beo/new-hello-halo/discussions) — 質問＆アイデア
+- [Issues](https://github.com/welfo-beo/new-hello-halo/issues) — バグレポート＆機能リクエスト
 
 ---
 
@@ -262,7 +262,7 @@ MIT ライセンス — 詳細は [LICENSE](../LICENSE) を参照。
 
 - **スターをつけてください** — 他の人が Halo を見つけやすくなります
 - **ストーリーを共有してください** — 何を作ったか聞きたいです
-- **リンクしてください** — 例：`Inspired by [Halo](https://github.com/openkursar/hello-halo)`
+- **リンクしてください** — 例：`Inspired by [Halo](https://github.com/welfo-beo/new-hello-halo)`
 
 ---
 
@@ -287,8 +287,8 @@ AI が AI を構築する。今やみんなの手に。
 
 ## 貢献者
 
-<a href="https://github.com/openkursar/hello-halo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=openkursar/hello-halo" />
+<a href="https://github.com/welfo-beo/new-hello-halo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=welfo-beo/new-hello-halo" />
 </a>
 
 Made with ❤️ by our contributors.
@@ -301,7 +301,7 @@ Halo が素晴らしいものを作る手助けになったら、ぜひ聞かせ
 
 **このリポジトリに Star を** して、他の人が Halo を発見する手助けをしてください。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=openkursar/hello-halo&type=Date)](https://star-history.com/#openkursar/hello-halo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=welfo-beo/new-hello-halo&type=Date)](https://star-history.com/#welfo-beo/new-hello-halo&Date)
 
 [⬆ トップに戻る](#halo)
 

@@ -12,10 +12,10 @@ Experience the full power of an AI Agent without touching the terminal. Halo bri
 > **Our Philosophy:** Wrap complex technology into intuitive human interaction.
 
 
-[![GitHub Stars](https://img.shields.io/github/stars/openkursar/hello-halo?style=social)](https://github.com/openkursar/hello-halo/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/welfo-beo/new-hello-halo?style=social)](https://github.com/welfo-beo/new-hello-halo/stargazers)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey.svg)](#installation)
-[![Downloads](https://img.shields.io/github/downloads/openkursar/hello-halo/total.svg)](https://github.com/openkursar/hello-halo/releases)
+[![Downloads](https://img.shields.io/github/downloads/welfo-beo/new-hello-halo/total.svg)](https://github.com/welfo-beo/new-hello-halo/releases)
 
 [Download](#installation) · [Documentation](#documentation) · [Contributing](#contributing)
 
@@ -140,10 +140,10 @@ https://github.com/user-attachments/assets/2d4d2f3e-d27c-44b0-8f1d-9059c8372003
 
 | Platform | Download | Requirements |
 |----------|----------|--------------|
-| **macOS** (Apple Silicon) | [Download .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **macOS** (Intel) | [Download .dmg](https://github.com/openkursar/hello-halo/releases/latest) | macOS 11+ |
-| **Windows** | [Download .exe](https://github.com/openkursar/hello-halo/releases/latest) | Windows 10+ |
-| **Linux** | [Download .AppImage](https://github.com/openkursar/hello-halo/releases/latest) | Ubuntu 20.04+ |
+| **macOS** (Apple Silicon) | [Download .dmg](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **macOS** (Intel) | [Download .dmg](https://github.com/welfo-beo/new-hello-halo/releases/latest) | macOS 11+ |
+| **Windows** | [Download .exe](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Windows 10+ |
+| **Linux** | [Download .AppImage](https://github.com/welfo-beo/new-hello-halo/releases/latest) | Ubuntu 20.04+ |
 | **Web** (PC/Mobile) | Enable Remote Access in desktop app | Any modern browser |
 
 **That's it.** Download, install, run. No Node.js. No npm. No terminal commands.
@@ -153,7 +153,7 @@ https://github.com/user-attachments/assets/2d4d2f3e-d27c-44b0-8f1d-9059c8372003
 For developers who want to contribute or customize:
 
 ```bash
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run prepare        # Download binary dependencies for your platform
@@ -241,7 +241,7 @@ We welcome contributions of all kinds:
 
 ```bash
 # Development setup
-git clone https://github.com/openkursar/hello-halo.git
+git clone https://github.com/welfo-beo/new-hello-halo.git
 cd hello-halo
 npm install
 npm run prepare        # Download binary dependencies for your platform
@@ -254,8 +254,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Community
 
-- [GitHub Discussions](https://github.com/openkursar/hello-halo/discussions) — Questions & ideas
-- [Issues](https://github.com/openkursar/hello-halo/issues) — Bug reports & feature requests
+- [GitHub Discussions](https://github.com/welfo-beo/new-hello-halo/discussions) — Questions & ideas
+- [Issues](https://github.com/welfo-beo/new-hello-halo/issues) — Bug reports & feature requests
 
 ---
 
@@ -271,7 +271,7 @@ If this project sparked an idea or helped you build something cool:
 
 - **Give us a star** — it helps others find Halo
 - **Share your story** — we love hearing what you built
-- **Link back to us** — e.g. `Inspired by [Halo](https://github.com/openkursar/hello-halo)`
+- **Link back to us** — e.g. `Inspired by [Halo](https://github.com/welfo-beo/new-hello-halo)`
 
 ---
 
@@ -296,8 +296,8 @@ AI building AI. Now in everyone's hands.
 
 ## Contributors
 
-<a href="https://github.com/openkursar/hello-halo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=openkursar/hello-halo" />
+<a href="https://github.com/welfo-beo/new-hello-halo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=welfo-beo/new-hello-halo" />
 </a>
 
 Made with ❤️ by our contributors.
@@ -310,7 +310,7 @@ If Halo helps you build something amazing, we'd love to hear about it.
 
 **Star this repo** to help others discover Halo.
 
-[![Star History Chart](https://api.star-history.com/svg?repos=openkursar/hello-halo&type=Date)](https://star-history.com/#openkursar/hello-halo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=welfo-beo/new-hello-halo&type=Date)](https://star-history.com/#welfo-beo/new-hello-halo&Date)
 
 [⬆ Back to Top](#halo)
 
