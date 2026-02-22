@@ -235,8 +235,8 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
   // AI Browser state
   const { enabled: aiBrowserEnabled } = useAIBrowserStore()
 
-  // Handle send (with optional images for multi-modal messages, optional thinking mode)
-  const handleSend = async (content: string, images?: ImageAttachment[], thinkingEnabled?: boolean) => {
+  // Handle send (with optional images, thinking mode, effort level)
+  const handleSend = async (content: string, images?: ImageAttachment[], thinkingMode?: string, effort?: string) => {
     // In onboarding mode, intercept and play mock response
     if (isOnboarding && currentStep === 'send-message') {
       handleOnboardingSend()
@@ -246,8 +246,7 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
     // Can send if has text OR has images
     if ((!content.trim() && (!images || images.length === 0)) || isGenerating) return
 
-    // Pass both AI Browser and thinking state to sendMessage
-    await sendMessage(content, images, aiBrowserEnabled, thinkingEnabled)
+    await sendMessage(content, images, aiBrowserEnabled, thinkingMode as any, effort as any)
   }
 
   // Handle stop - stops the current conversation's generation

@@ -73,6 +73,30 @@ export interface CanvasContext {
 }
 
 // ============================================
+// Effort Parameter
+// ============================================
+
+export type EffortLevel = 'max' | 'high' | 'medium' | 'low'
+
+// ============================================
+// Thinking Mode
+// ============================================
+
+export type ThinkingMode = 'disabled' | 'enabled' | 'adaptive'
+
+// ============================================
+// Subagent Definition
+// ============================================
+
+export interface SubagentDefinition {
+  name: string
+  description: string
+  prompt: string
+  tools?: string[]
+  model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+}
+
+// ============================================
 // Agent Request
 // ============================================
 
@@ -83,7 +107,11 @@ export interface AgentRequest {
   resumeSessionId?: string
   images?: ImageAttachment[]  // Optional images for multi-modal messages
   aiBrowserEnabled?: boolean  // Enable AI Browser tools for this request
-  thinkingEnabled?: boolean   // Enable extended thinking mode (maxThinkingTokens: 10240)
+  thinkingEnabled?: boolean   // Enable extended thinking mode (legacy boolean, kept for compat)
+  thinkingMode?: ThinkingMode // Thinking mode: disabled, enabled (manual), adaptive
+  thinkingBudget?: number     // Budget tokens for manual thinking mode (default: 10240)
+  effort?: EffortLevel        // Effort level: max, high, medium, low
+  subagents?: SubagentDefinition[]  // Custom subagent definitions
   model?: string              // Model to use (for future model switching)
   canvasContext?: CanvasContext  // Current canvas state for AI awareness
 }
@@ -177,6 +205,8 @@ export type V2SDKSession = {
  */
 export interface SessionConfig {
   aiBrowserEnabled: boolean
+  effort: EffortLevel | null
+  subagentsSignature: string
   // thinkingEnabled is dynamic via setMaxThinkingTokens, no rebuild needed
 }
 

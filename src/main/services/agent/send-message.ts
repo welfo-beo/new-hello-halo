@@ -62,6 +62,22 @@ const FALLBACK_ERROR_HINT = 'Check logs in Settings > System > Logs.'
 // Send Message
 // ============================================
 
+function createSubagentsSignature(subagents: AgentRequest['subagents']): string {
+  if (!subagents || subagents.length === 0) {
+    return ''
+  }
+
+  const normalized = subagents.map((agent) => ({
+    name: agent.name,
+    description: agent.description,
+    prompt: agent.prompt,
+    tools: agent.tools ? [...agent.tools].sort() : [],
+    model: agent.model || 'inherit'
+  })).sort((a, b) => a.name.localeCompare(b.name))
+
+  return JSON.stringify(normalized)
+}
+
 /**
  * Send message to agent (supports multiple concurrent sessions)
  *
@@ -87,10 +103,18 @@ export async function sendMessage(
     images,
     aiBrowserEnabled,
     thinkingEnabled,
+    thinkingMode,
+    thinkingBudget,
+    effort,
+    subagents,
     canvasContext
   } = request
 
-  console.log(`[Agent] sendMessage: conv=${conversationId}${images && images.length > 0 ? `, images=${images.length}` : ''}${aiBrowserEnabled ? ', AI Browser enabled' : ''}${thinkingEnabled ? ', thinking=ON' : ''}${canvasContext?.isOpen ? `, canvas tabs=${canvasContext.tabCount}` : ''}`)
+  // Resolve effective thinking mode: new thinkingMode takes priority over legacy boolean
+  const effectiveThinkingMode = thinkingMode || (thinkingEnabled ? 'enabled' : 'disabled')
+  const effectiveThinkingBudget = thinkingBudget || 10240
+
+  console.log(`[Agent] sendMessage: conv=${conversationId}${images && images.length > 0 ? `, images=${images.length}` : ''}${aiBrowserEnabled ? ', AI Browser enabled' : ''}${effectiveThinkingMode !== 'disabled' ? `, thinking=${effectiveThinkingMode}` : ''}${effort ? `, effort=${effort}` : ''}${subagents?.length ? `, subagents=${subagents.length}` : ''}${canvasContext?.isOpen ? `, canvas tabs=${canvasContext.tabCount}` : ''}`)
 
   const config = getConfig()
   const workDir = getWorkingDir(spaceId)
@@ -159,16 +183,41 @@ export async function sendMessage(
       maxTurns: config.agent?.maxTurns
     })
 
-    // Apply dynamic configurations (AI Browser system prompt, Thinking mode)
-    // These are specific to sendMessage and not part of base options
+    // Apply dynamic configurations (AI Browser system prompt, Thinking mode, Effort, Subagents)
     if (aiBrowserEnabled) {
       sdkOptions.systemPrompt = buildSystemPromptWithAIBrowser(
         { workDir, modelInfo: resolvedCredentials.displayModel },
         AI_BROWSER_SYSTEM_PROMPT
       )
     }
-    if (thinkingEnabled) {
-      sdkOptions.maxThinkingTokens = 10240
+
+    // Thinking mode configuration
+    if (effectiveThinkingMode === 'adaptive') {
+      sdkOptions.thinking = { type: 'adaptive' }
+    } else if (effectiveThinkingMode === 'enabled') {
+      sdkOptions.maxThinkingTokens = effectiveThinkingBudget
+    }
+
+    // Effort parameter
+    if (effort) {
+      sdkOptions.effort = effort
+    }
+
+    // Subagent definitions
+    if (subagents && subagents.length > 0) {
+      sdkOptions.agents = subagents.reduce((acc, agent) => {
+        acc[agent.name] = {
+          description: agent.description,
+          prompt: agent.prompt,
+          ...(agent.tools && { tools: agent.tools }),
+          ...(agent.model && agent.model !== 'inherit' && { model: agent.model })
+        }
+        return acc
+      }, {} as Record<string, any>)
+      // Ensure Task tool is available for subagent invocation
+      if (!sdkOptions.allowedTools.includes('Task')) {
+        sdkOptions.allowedTools = [...sdkOptions.allowedTools, 'Task']
+      }
     }
 
     const t0 = Date.now()
@@ -182,7 +231,9 @@ export async function sendMessage(
 
     // Session config for rebuild detection
     const sessionConfig: SessionConfig = {
-      aiBrowserEnabled: !!aiBrowserEnabled
+      aiBrowserEnabled: !!aiBrowserEnabled,
+      effort: effort || null,
+      subagentsSignature: createSubagentsSignature(subagents)
     }
 
     // Get or create persistent V2 session for this conversation
@@ -207,10 +258,13 @@ export async function sendMessage(
         console.log(`[Agent][${conversationId}] Model set: ${resolvedCredentials.sdkModel}`)
       }
 
-      // Set thinking tokens dynamically
+      // Set thinking tokens dynamically based on thinking mode
       if (v2Session.setMaxThinkingTokens) {
-        await v2Session.setMaxThinkingTokens(thinkingEnabled ? 10240 : null)
-        console.log(`[Agent][${conversationId}] Thinking mode: ${thinkingEnabled ? 'ON (10240 tokens)' : 'OFF'}`)
+        const thinkingTokens = effectiveThinkingMode === 'enabled' ? effectiveThinkingBudget
+          : effectiveThinkingMode === 'adaptive' ? -1  // Signal adaptive mode
+          : null
+        await v2Session.setMaxThinkingTokens(thinkingTokens)
+        console.log(`[Agent][${conversationId}] Thinking: ${effectiveThinkingMode}${effectiveThinkingMode === 'enabled' ? ` (${effectiveThinkingBudget} tokens)` : ''}`)
       }
     } catch (e) {
       console.error(`[Agent][${conversationId}] Failed to set dynamic params:`, e)

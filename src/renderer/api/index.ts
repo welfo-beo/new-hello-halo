@@ -362,9 +362,19 @@ export const api = {
       name?: string
       size?: number
     }>
-    aiBrowserEnabled?: boolean  // Enable AI Browser tools
-    thinkingEnabled?: boolean  // Enable extended thinking mode
-    canvasContext?: {  // Canvas context for AI awareness
+    aiBrowserEnabled?: boolean
+    thinkingEnabled?: boolean
+    thinkingMode?: 'disabled' | 'enabled' | 'adaptive'
+    thinkingBudget?: number
+    effort?: 'max' | 'high' | 'medium' | 'low'
+    subagents?: Array<{
+      name: string
+      description: string
+      prompt: string
+      tools?: string[]
+      model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+    }>
+    canvasContext?: {
       isOpen: boolean
       tabCount: number
       activeTab: {

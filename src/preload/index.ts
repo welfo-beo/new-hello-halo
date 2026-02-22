@@ -94,7 +94,17 @@ export interface HaloAPI {
       size?: number
     }>
     aiBrowserEnabled?: boolean  // Enable AI Browser tools
-    thinkingEnabled?: boolean  // Enable extended thinking mode
+    thinkingEnabled?: boolean  // Enable extended thinking mode (legacy)
+    thinkingMode?: 'disabled' | 'enabled' | 'adaptive'  // Thinking mode
+    thinkingBudget?: number  // Budget tokens for manual thinking
+    effort?: 'max' | 'high' | 'medium' | 'low'  // Effort level
+    subagents?: Array<{
+      name: string
+      description: string
+      prompt: string
+      tools?: string[]
+      model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+    }>
     canvasContext?: {  // Canvas context for AI awareness
       isOpen: boolean
       tabCount: number

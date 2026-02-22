@@ -326,6 +326,8 @@ function migrateSessionIfNeeded(workDir: string, sessionId: string): boolean {
  */
 export function needsSessionRebuild(existing: V2SessionInfo, newConfig: SessionConfig): boolean {
   return existing.config.aiBrowserEnabled !== newConfig.aiBrowserEnabled
+    || existing.config.effort !== newConfig.effort
+    || existing.config.subagentsSignature !== newConfig.subagentsSignature
 }
 
 /**
@@ -388,7 +390,7 @@ export async function getOrCreateV2Session(
         if (activeSessions.has(conversationId)) {
           const reason = needsCredentialRebuild
             ? `credentials (gen ${existing.credentialsGeneration} → ${currentGen})`
-            : `config (aiBrowser: ${existing.config.aiBrowserEnabled} → ${config!.aiBrowserEnabled})`
+            : 'config changed'
           console.log(`[Agent][${conversationId}] ${reason} changed but request in flight, deferring rebuild`)
           pendingInvalidations.add(conversationId)
           existing.lastUsedAt = Date.now()
@@ -398,7 +400,7 @@ export async function getOrCreateV2Session(
         if (needsCredentialRebuild) {
           console.log(`[Agent][${conversationId}] Credentials changed (gen ${existing.credentialsGeneration} → ${currentGen}), recreating session`)
         } else {
-          console.log(`[Agent][${conversationId}] Config changed (aiBrowser: ${existing.config.aiBrowserEnabled} → ${config!.aiBrowserEnabled}), rebuilding session...`)
+          console.log(`[Agent][${conversationId}] Config changed, rebuilding session...`)
         }
         closeV2SessionForRebuild(conversationId)
         // Fall through to create new session
@@ -470,7 +472,7 @@ export async function getOrCreateV2Session(
     conversationId,
     createdAt: Date.now(),
     lastUsedAt: Date.now(),
-    config: config || { aiBrowserEnabled: false },
+    config: config || { aiBrowserEnabled: false, effort: null, subagentsSignature: '' },
     credentialsGeneration: getCredentialsGeneration()
   })
 
