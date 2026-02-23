@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Upload } from 'lucide-react'
 import { api } from '../../api'
 
 interface SkillDef {
@@ -43,6 +43,24 @@ export function SkillsSection({ spaceDir }: { spaceDir?: string }) {
     setCreating(false)
   }
 
+  const handleUpload = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.md'
+    input.multiple = true
+    input.onchange = async (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (!files) return
+      for (const file of Array.from(files)) {
+        const content = await file.text()
+        const name = file.name.replace(/\.md$/, '')
+        await api.skillsSave(name, content, 'global', spaceDir)
+      }
+      load()
+    }
+    input.click()
+  }
+
   const handleDelete = async (skill: SkillDef) => {
     await api.skillsDelete(skill.filePath)
     load()
@@ -57,9 +75,14 @@ export function SkillsSection({ spaceDir }: { spaceDir?: string }) {
       </p>
       <div className="flex gap-4">
         <div className="w-40 shrink-0">
-          <button onClick={handleNew} className="w-full flex items-center gap-1 px-2 py-1.5 text-xs bg-secondary rounded mb-2 hover:bg-secondary/80">
-            <Plus className="w-3 h-3" /> New Skill
-          </button>
+          <div className="flex gap-1 mb-2">
+            <button onClick={handleNew} className="flex-1 flex items-center gap-1 px-2 py-1.5 text-xs bg-secondary rounded hover:bg-secondary/80">
+              <Plus className="w-3 h-3" /> New
+            </button>
+            <button onClick={handleUpload} className="flex items-center gap-1 px-2 py-1.5 text-xs bg-secondary rounded hover:bg-secondary/80" title="Upload .md files">
+              <Upload className="w-3 h-3" />
+            </button>
+          </div>
           {skills.map(s => (
             <div key={s.filePath} className={`flex items-center justify-between px-2 py-1.5 rounded text-xs cursor-pointer mb-1 ${selected?.filePath === s.filePath ? 'bg-primary/20' : 'hover:bg-secondary'}`}>
               <span onClick={() => handleSelect(s)} className="flex-1 truncate">/{s.name}</span>

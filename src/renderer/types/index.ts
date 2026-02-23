@@ -597,6 +597,16 @@ export interface AppState {
 }
 
 // ============================================
+// Hooks Types
+// ============================================
+
+export type HookEvent = 'PreToolUse' | 'PostToolUse' | 'Stop' | 'Notification' | 'SubagentStop'
+export type HookType = 'command'
+export interface Hook { type: HookType; command: string; timeout?: number }
+export interface HookEntry { matcher: string; hooks: Hook[] }
+export type HooksConfig = Partial<Record<HookEvent, HookEntry[]>>
+
+// ============================================
 // IPC Types
 // ============================================
 

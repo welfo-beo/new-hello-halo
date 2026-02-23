@@ -340,6 +340,13 @@ export interface HaloAPI {
   gitStatus: (spaceId: string) => Promise<IpcResponse>
   gitDiff: (spaceId: string, filePath?: string, staged?: boolean) => Promise<IpcResponse>
   gitLog: (spaceId: string, limit?: number) => Promise<IpcResponse>
+  gitStage: (spaceId: string, filePath: string) => Promise<IpcResponse>
+  gitUnstage: (spaceId: string, filePath: string) => Promise<IpcResponse>
+  gitCommit: (spaceId: string, message: string) => Promise<IpcResponse>
+  gitBranches: (spaceId: string) => Promise<IpcResponse>
+  gitCheckout: (spaceId: string, branch: string, create?: boolean) => Promise<IpcResponse>
+  gitStagedDiff: (spaceId: string) => Promise<IpcResponse>
+  gitCurrentBranch: (spaceId: string) => Promise<IpcResponse>
 }
 
 interface IpcResponse<T = unknown> {
@@ -593,6 +600,13 @@ const api: HaloAPI = {
   gitStatus: (spaceId) => ipcRenderer.invoke('git:status', spaceId),
   gitDiff: (spaceId, filePath, staged) => ipcRenderer.invoke('git:diff', spaceId, filePath, staged),
   gitLog: (spaceId, limit) => ipcRenderer.invoke('git:log', spaceId, limit),
+  gitStage: (spaceId, filePath) => ipcRenderer.invoke('git:stage', spaceId, filePath),
+  gitUnstage: (spaceId, filePath) => ipcRenderer.invoke('git:unstage', spaceId, filePath),
+  gitCommit: (spaceId, message) => ipcRenderer.invoke('git:commit', spaceId, message),
+  gitBranches: (spaceId) => ipcRenderer.invoke('git:branches', spaceId),
+  gitCheckout: (spaceId, branch, create) => ipcRenderer.invoke('git:checkout', spaceId, branch, create),
+  gitStagedDiff: (spaceId) => ipcRenderer.invoke('git:staged-diff', spaceId),
+  gitCurrentBranch: (spaceId) => ipcRenderer.invoke('git:current-branch', spaceId),
 }
 
 contextBridge.exposeInMainWorld('halo', api)

@@ -18,6 +18,7 @@
 
 import { MessageCircle } from 'lucide-react'
 import { useCanvasStore } from '../../stores/canvas.store'
+import { useChatStore } from '../../stores/chat.store'
 import { useTranslation } from '../../i18n'
 
 interface ChatCapsuleProps {
@@ -27,14 +28,12 @@ interface ChatCapsuleProps {
 export function ChatCapsule({ className = '' }: ChatCapsuleProps) {
   const { t } = useTranslation()
   const setMaximized = useCanvasStore(state => state.setMaximized)
-
-  const handleClick = () => {
-    setMaximized(false)
-  }
+  const unseenCount = useChatStore(state => state.unseenCompletions.size)
+  const isGenerating = useChatStore(state => state.getCurrentSession().isGenerating)
 
   return (
     <button
-      onClick={handleClick}
+      onClick={() => setMaximized(false)}
       className={`
         fixed left-3 top-1/2 -translate-y-1/2 z-50
         w-11 h-11
@@ -54,45 +53,21 @@ export function ChatCapsule({ className = '' }: ChatCapsuleProps) {
       title={t('Return to conversation')}
       aria-label={t('Exit fullscreen and return to chat')}
     >
-      {/* Halo-style icon - using MessageCircle as chat indicator */}
-      <MessageCircle
-        className="
-          w-5 h-5
-          text-muted-foreground
-          group-hover:text-primary
-          transition-colors duration-200
-        "
-      />
+      <MessageCircle className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
 
-      {/*
-        TODO: Unread message count badge
-        {unreadCount > 0 && (
-          <span className="
-            absolute -top-1 -right-1
-            min-w-5 h-5 px-1.5
-            flex items-center justify-center
-            rounded-full
-            bg-destructive text-destructive-foreground
-            text-xs font-medium
-          ">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      */}
+      {unseenCount > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-medium">
+          {unseenCount > 99 ? '99+' : unseenCount}
+        </span>
+      )}
 
-      {/*
-        TODO: AI typing indicator
-        {isAITyping && (
-          <span className="
-            absolute -bottom-1 left-1/2 -translate-x-1/2
-            flex gap-0.5
-          ">
-            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
-          </span>
-        )}
-      */}
+      {isGenerating && (
+        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+          <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+        </span>
+      )}
     </button>
   )
 }

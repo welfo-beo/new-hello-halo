@@ -4,7 +4,7 @@ import { getConfig } from './config.service'
 
 const execAsync = promisify(exec)
 
-export type HookEvent = 'PreToolUse' | 'PostToolUse' | 'Stop'
+export type HookEvent = 'PreToolUse' | 'PostToolUse' | 'Stop' | 'Notification' | 'SubagentStop'
 export type HookType = 'command'
 
 export interface Hook {
