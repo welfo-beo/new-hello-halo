@@ -21,7 +21,10 @@ import {
   AppearanceSection,
   SystemSection,
   RemoteAccessSection,
-  AboutSection
+  AboutSection,
+  MemorySection,
+  HooksSection,
+  SkillsSection
 } from '../components/settings'
 
 export function SettingsPage() {
@@ -123,6 +126,15 @@ export function SettingsPage() {
                   </p>
                 </div>
               </section>
+
+              {/* Memory Section */}
+              <MemorySection />
+
+              {/* Hooks Section */}
+              <HooksSection />
+
+              {/* Skills Section */}
+              <SkillsSection />
 
               {/* Appearance Section */}
               <AppearanceSection config={config} setConfig={setConfig} />

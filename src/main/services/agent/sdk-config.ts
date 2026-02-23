@@ -15,6 +15,7 @@ import { inferOpenAIWireApi } from './helpers'
 import { buildSystemPrompt, DEFAULT_ALLOWED_TOOLS } from './system-prompt'
 import { createCanUseTool } from './permission-handler'
 import { sendToRenderer } from './helpers'
+import { buildMemorySystemPrompt } from '../claude-memory.service'
 
 // ============================================
 // Configuration
@@ -80,6 +81,8 @@ export interface BaseSdkOptionsParams {
   mcpServers?: Record<string, any> | null
   /** Maximum tool call turns per message (from config) */
   maxTurns?: number
+  /** Space directory for memory loading */
+  spaceDir?: string
 }
 
 // ============================================
@@ -335,6 +338,8 @@ export function buildBaseSdkOptions(params: BaseSdkOptionsParams): Record<string
     mcpServers
   } = params
 
+  const memoryContent = buildMemorySystemPrompt(params.spaceDir)
+
   console.log(`[SDK Config] buildBaseSdkOptions: workDir="${workDir}", spaceId="${spaceId}"`)
 
   // Build environment variables
@@ -356,7 +361,7 @@ export function buildBaseSdkOptions(params: BaseSdkOptionsParams): Record<string
       console.error(`[Agent][${conversationId}] CLI stderr:`, data)
     }),
     // Use Halo's custom system prompt instead of SDK's 'claude_code' preset
-    systemPrompt: buildSystemPrompt({ workDir, modelInfo: credentials.displayModel }),
+    systemPrompt: buildSystemPrompt({ workDir, modelInfo: credentials.displayModel, memoryContent: memoryContent || undefined }),
     maxTurns: params.maxTurns ?? 50,
     allowedTools: [...DEFAULT_ALLOWED_TOOLS],
     // Enable Skills loading from $CLAUDE_CONFIG_DIR/skills/ and <workspace>/.claude/skills/

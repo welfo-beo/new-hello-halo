@@ -54,6 +54,7 @@ import {
 } from './message-utils'
 import { onAgentError, runPpidScanAndCleanup } from '../health'
 import { resolveCredentialsForSdk, buildBaseSdkOptions } from './sdk-config'
+import { executeHooks } from '../hooks.service'
 
 // Unified fallback error suffix - guides user to check logs
 const FALLBACK_ERROR_HINT = 'Check logs in Settings > System > Logs.'
@@ -700,6 +701,9 @@ async function processMessageStream(
             }
             sendToRenderer('agent:tool-call', spaceId, conversationId, toolCall as unknown as Record<string, unknown>)
 
+            // Fire PreToolUse hook (fire-and-forget)
+            executeHooks('PreToolUse', blockState.toolName || '', toolInput).catch(() => {})
+
             if (is.dev) {
               console.log(`[Agent][${conversationId}] Tool block complete [${blockState.toolName}], input: ${JSON.stringify(toolInput).substring(0, 100)}`)
             }
@@ -778,6 +782,10 @@ async function processMessageStream(
             result: thought.toolOutput || '',
             isError: thought.isError || false
           })
+
+          // Fire PostToolUse hook (fire-and-forget)
+          const toolUseName = sessionState.thoughts.find(t => t.id === toolUseThoughtId)?.toolName || ''
+          executeHooks('PostToolUse', toolUseName).catch(() => {})
 
           console.log(`[Agent][${conversationId}] Tool result merged into thought ${toolUseThoughtId}`)
         } else {
@@ -990,6 +998,9 @@ async function processMessageStream(
     duration: 0,
     tokenUsage
   })
+
+  // Fire Stop hook (fire-and-forget)
+  executeHooks('Stop', 'agent').catch(() => {})
 
   // Step 3: Determine if interrupted error should be sent
   const getInterruptedErrorMessage = (): string | null => {

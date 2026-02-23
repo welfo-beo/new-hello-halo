@@ -20,7 +20,7 @@
  */
 
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent, DragEvent } from 'react'
-import { Plus, ImagePlus, Loader2, AlertCircle, Atom, Globe, Gauge, Bot } from 'lucide-react'
+import { Plus, ImagePlus, Loader2, AlertCircle, Atom, Globe, Gauge, Bot, Wand2, Search, GitBranch } from 'lucide-react'
 import { useOnboardingStore } from '../../stores/onboarding.store'
 import { useAIBrowserStore } from '../../stores/ai-browser.store'
 import { useSubagentsStore, type SubagentsMode } from '../../stores/subagents.store'
@@ -28,9 +28,14 @@ import { useSpaceStore } from '../../stores/space.store'
 import { getOnboardingPrompt } from '../onboarding/onboardingData'
 import { ImageAttachmentPreview } from './ImageAttachmentPreview'
 import { SubagentsPanel } from './SubagentsPanel'
+import { FileSearchPanel } from './FileSearchPanel'
+import { GitPanel } from './GitPanel'
 import { processImage, isValidImageType, formatFileSize } from '../../utils/imageProcessor'
 import type { ImageAttachment } from '../../types'
 import { useTranslation } from '../../i18n'
+import { api } from '../../api'
+
+type SkillItem = { name: string; description: string; content: string }
 
 type ThinkingMode = 'disabled' | 'enabled' | 'adaptive'
 type EffortLevel = 'max' | 'high' | 'medium' | 'low'
@@ -66,11 +71,18 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
   const [showEffortMenu, setShowEffortMenu] = useState(false)
   const [showAttachMenu, setShowAttachMenu] = useState(false)  // Attachment menu visibility
   const [showSubagentsPanel, setShowSubagentsPanel] = useState(false)
+  const [showFileSearch, setShowFileSearch] = useState(false)
+  const [showGitPanel, setShowGitPanel] = useState(false)
+  const [showSkillMenu, setShowSkillMenu] = useState(false)
+  const [skillQuery, setSkillQuery] = useState('')
+  const [skills, setSkills] = useState<SkillItem[]>([])
+  const [skillMenuIdx, setSkillMenuIdx] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const attachMenuRef = useRef<HTMLDivElement>(null)
   const effortMenuRef = useRef<HTMLDivElement>(null)
   const subagentsPanelRef = useRef<HTMLDivElement>(null)
+  const skillMenuRef = useRef<HTMLDivElement>(null)
 
   // AI Browser state
   const { enabled: aiBrowserEnabled, setEnabled: setAIBrowserEnabled } = useAIBrowserStore()
@@ -100,17 +112,56 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
       if (subagentsPanelRef.current && !subagentsPanelRef.current.contains(event.target as Node)) {
         setShowSubagentsPanel(false)
       }
+      if (skillMenuRef.current && !skillMenuRef.current.contains(event.target as Node)) {
+        setShowSkillMenu(false)
+      }
     }
 
-    if (showAttachMenu || showEffortMenu || showSubagentsPanel) {
+    if (showAttachMenu || showEffortMenu || showSubagentsPanel || showSkillMenu) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showAttachMenu, showEffortMenu, showSubagentsPanel])
+  }, [showAttachMenu, showEffortMenu, showSubagentsPanel, showSkillMenu])
 
   // Show error to user
   const showError = (message: string) => {
     setImageError({ id: `err-${Date.now()}`, message })
+  }
+
+  // Skill slash command detection
+  const filteredSkills = skills.filter(s =>
+    !skillQuery || s.name.toLowerCase().startsWith(skillQuery.toLowerCase())
+  )
+
+  const handleContentChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (isOnboardingSendStep) return
+    const val = e.target.value
+    setContent(val)
+    const pos = e.target.selectionStart ?? val.length
+    const before = val.slice(0, pos)
+    const m = before.match(/(^|\s)\/(\w*)$/)
+    if (m) {
+      setSkillQuery(m[2])
+      setShowSkillMenu(true)
+      setSkillMenuIdx(0)
+      if (skills.length === 0) {
+        try { setSkills(await api.skillsList()) } catch {}
+      }
+    } else {
+      setShowSkillMenu(false)
+    }
+  }
+
+  const applySkill = (skill: SkillItem) => {
+    const pos = textareaRef.current?.selectionStart ?? content.length
+    const before = content.slice(0, pos)
+    const m = before.match(/(^|\s)(\/\w*)$/)
+    if (m) {
+      const slashStart = pos - m[2].length
+      setContent(content.slice(0, slashStart) + skill.content + content.slice(pos))
+    }
+    setShowSkillMenu(false)
+    setTimeout(() => textareaRef.current?.focus(), 0)
   }
 
   // Onboarding state
@@ -291,6 +342,14 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
 
   // Handle key press
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Skill menu navigation
+    if (showSkillMenu && filteredSkills.length > 0) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSkillMenuIdx(i => Math.min(i + 1, filteredSkills.length - 1)); return }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setSkillMenuIdx(i => Math.max(i - 1, 0)); return }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); applySkill(filteredSkills[skillMenuIdx]); return }
+      if (e.key === 'Escape') { e.preventDefault(); setShowSkillMenu(false); return }
+    }
+
     // Ignore key events during IME composition (Chinese/Japanese/Korean input)
     // This prevents Enter from sending the message while confirming IME candidates
     if (e.nativeEvent.isComposing) return
@@ -382,12 +441,49 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
             </div>
           )}
 
+          {/* File Search Panel */}
+          {showFileSearch && (
+            <FileSearchPanel
+              spaceId={spaceId}
+              onInsert={(text) => setContent(prev => prev + (prev ? ' ' : '') + text)}
+              onClose={() => setShowFileSearch(false)}
+            />
+          )}
+
+          {/* Git Panel */}
+          {showGitPanel && (
+            <GitPanel
+              spaceId={spaceId}
+              onInsert={(text) => setContent(prev => prev + (prev ? '\n' : '') + text)}
+              onClose={() => setShowGitPanel(false)}
+            />
+          )}
+
+          {/* Skill slash command menu */}
+          {showSkillMenu && filteredSkills.length > 0 && (
+            <div ref={skillMenuRef} className="absolute bottom-full left-0 right-0 mb-1 mx-3 py-1
+              bg-popover border border-border rounded-xl shadow-lg z-30 max-h-48 overflow-y-auto">
+              {filteredSkills.map((skill, i) => (
+                <button
+                  key={skill.name}
+                  onMouseDown={(e) => { e.preventDefault(); applySkill(skill) }}
+                  className={`w-full px-3 py-2 flex items-center gap-2 text-sm text-left transition-colors
+                    ${i === skillMenuIdx ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted/50'}`}
+                >
+                  <Wand2 size={14} className="flex-shrink-0 text-muted-foreground" />
+                  <span className="font-medium">/{skill.name}</span>
+                  {skill.description && <span className="text-xs text-muted-foreground truncate">{skill.description}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Textarea area */}
           <div className="px-3 pt-3 pb-1">
             <textarea
               ref={textareaRef}
               value={displayContent}
-              onChange={(e) => !isOnboardingSendStep && setContent(e.target.value)}
+              onChange={handleContentChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
               onFocus={() => setIsFocused(true)}
@@ -431,6 +527,10 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
             onSubagentsPanelToggle={() => setShowSubagentsPanel(!showSubagentsPanel)}
             subagentsPanelRef={subagentsPanelRef}
             spaceId={spaceId}
+            showFileSearch={showFileSearch}
+            onFileSearchToggle={() => setShowFileSearch(!showFileSearch)}
+            showGitPanel={showGitPanel}
+            onGitPanelToggle={() => setShowGitPanel(!showGitPanel)}
             canSend={canSend}
             onSend={handleSend}
             onStop={onStop}
@@ -473,6 +573,10 @@ interface InputToolbarProps {
   onSubagentsPanelToggle: () => void
   subagentsPanelRef: React.RefObject<HTMLDivElement | null>
   spaceId: string
+  showFileSearch: boolean
+  onFileSearchToggle: () => void
+  showGitPanel: boolean
+  onGitPanelToggle: () => void
   canSend: boolean
   onSend: () => void
   onStop: () => void
@@ -504,6 +608,10 @@ function InputToolbar({
   onSubagentsPanelToggle,
   subagentsPanelRef,
   spaceId,
+  showFileSearch,
+  onFileSearchToggle,
+  showGitPanel,
+  onGitPanelToggle,
   canSend,
   onSend,
   onStop
@@ -677,6 +785,40 @@ function InputToolbar({
               <SubagentsPanel spaceId={spaceId} onClose={() => setShowSubagentsPanel(false)} />
             )}
           </div>
+        )}
+
+        {/* File search button */}
+        {!isGenerating && !isOnboarding && (
+          <button
+            onClick={onFileSearchToggle}
+            className={`h-8 flex items-center gap-1.5 px-2.5 rounded-lg transition-colors duration-200
+              ${showFileSearch
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
+              }
+            `}
+            title={t('Search files')}
+          >
+            <Search size={15} />
+            <span className="text-xs">{t('Files')}</span>
+          </button>
+        )}
+
+        {/* Git button */}
+        {!isGenerating && !isOnboarding && (
+          <button
+            onClick={onGitPanelToggle}
+            className={`h-8 flex items-center gap-1.5 px-2.5 rounded-lg transition-colors duration-200
+              ${showGitPanel
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
+              }
+            `}
+            title={t('Git')}
+          >
+            <GitBranch size={15} />
+            <span className="text-xs">{t('Git')}</span>
+          </button>
         )}
       </div>
 

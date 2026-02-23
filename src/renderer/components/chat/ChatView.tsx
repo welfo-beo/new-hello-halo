@@ -14,6 +14,7 @@ import { useSpaceStore } from '../../stores/space.store'
 import { useChatStore } from '../../stores/chat.store'
 import { useOnboardingStore } from '../../stores/onboarding.store'
 import { useAIBrowserStore } from '../../stores/ai-browser.store'
+import { useWorkspaceStore } from '../../stores/agent-workspace.store'
 import { MessageList } from './MessageList'
 import type { MessageListHandle } from './MessageList'
 import { InputArea } from './InputArea'
@@ -234,6 +235,7 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
 
   // AI Browser state
   const { enabled: aiBrowserEnabled } = useAIBrowserStore()
+  const clearWorkspace = useWorkspaceStore(s => s.clear)
 
   // Handle send (with optional images, thinking mode, effort level)
   const handleSend = async (content: string, images?: ImageAttachment[], thinkingMode?: string, effort?: string) => {
@@ -246,6 +248,7 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
     // Can send if has text OR has images
     if ((!content.trim() && (!images || images.length === 0)) || isGenerating) return
 
+    clearWorkspace()
     await sendMessage(content, images, aiBrowserEnabled, thinkingMode as any, effort as any)
   }
 

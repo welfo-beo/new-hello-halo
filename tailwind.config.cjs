@@ -50,6 +50,15 @@ module.exports = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      keyframes: {
+        'slide-in-left': {
+          from: { transform: 'translateX(-100%)', opacity: '0' },
+          to: { transform: 'translateX(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        'slide-in-left': 'slide-in-left 0.2s ease-out',
+      },
       // GitHub-like typography customization
       typography: ({ theme }) => ({
         DEFAULT: {

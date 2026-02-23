@@ -1214,6 +1214,64 @@ export const api = {
     }
     return window.halo.runHealthCheck()
   },
+
+  // Memory (CLAUDE.md)
+  memoryRead: async (scope: 'global' | 'space', spaceDir?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.memoryRead(scope, spaceDir)
+    return httpRequest('GET', `/api/memory?scope=${scope}${spaceDir ? `&spaceDir=${encodeURIComponent(spaceDir)}` : ''}`)
+  },
+
+  memoryWrite: async (scope: 'global' | 'space', content: string, spaceDir?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.memoryWrite(scope, content, spaceDir)
+    return httpRequest('POST', '/api/memory', { scope, content, spaceDir })
+  },
+
+  // Hooks
+  hooksGet: async (): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.hooksGet()
+    return httpRequest('GET', '/api/hooks')
+  },
+
+  hooksSet: async (hooks: Record<string, unknown>): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.hooksSet(hooks)
+    return httpRequest('POST', '/api/hooks', hooks)
+  },
+
+  // Skills
+  skillsList: async (spaceDir?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.skillsList(spaceDir)
+    return httpRequest('GET', `/api/skills${spaceDir ? `?spaceDir=${encodeURIComponent(spaceDir)}` : ''}`)
+  },
+
+  skillsSave: async (name: string, content: string, scope: 'global' | 'space', spaceDir?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.skillsSave(name, content, scope, spaceDir)
+    return httpRequest('POST', '/api/skills', { name, content, scope, spaceDir })
+  },
+
+  skillsDelete: async (filePath: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.skillsDelete(filePath)
+    return httpRequest('DELETE', `/api/skills?path=${encodeURIComponent(filePath)}`)
+  },
+
+  fileSearch: async (query: string, spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.fileSearch(query, spaceId)
+    return httpRequest('POST', '/api/file-search', { query, spaceId })
+  },
+
+  gitStatus: async (spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitStatus(spaceId)
+    return httpRequest('GET', `/api/git/status?spaceId=${spaceId}`)
+  },
+
+  gitDiff: async (spaceId: string, filePath?: string, staged = false): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitDiff(spaceId, filePath, staged)
+    return httpRequest('POST', '/api/git/diff', { spaceId, filePath, staged })
+  },
+
+  gitLog: async (spaceId: string, limit = 10): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitLog(spaceId, limit)
+    return httpRequest('GET', `/api/git/log?spaceId=${spaceId}&limit=${limit}`)
+  },
 }
 
 // Export type for the API
