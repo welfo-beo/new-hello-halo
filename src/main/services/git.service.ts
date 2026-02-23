@@ -2,7 +2,7 @@
  * Git Service - Workspace git operations
  */
 
-import { execSync } from 'child_process'
+import { execFileSync, execSync } from 'child_process'
 import { existsSync } from 'fs'
 import { join } from 'path'
 
@@ -86,7 +86,7 @@ export function gitUnstage(workDir: string, filePath: string): boolean {
 export function gitCommit(workDir: string, message: string): { success: boolean; error?: string } {
   if (!isGitRepo(workDir)) return { success: false, error: 'Not a git repo' }
   try {
-    execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: workDir, encoding: 'utf-8', timeout: 15000 })
+    execFileSync('git', ['commit', '-m', message], { cwd: workDir, encoding: 'utf-8', timeout: 15000 })
     return { success: true }
   } catch (e: any) {
     return { success: false, error: e.stderr || e.message }
@@ -113,8 +113,8 @@ export function getGitBranches(workDir: string): GitBranch[] {
 export function gitCheckout(workDir: string, branch: string, create = false): { success: boolean; error?: string } {
   if (!isGitRepo(workDir)) return { success: false, error: 'Not a git repo' }
   try {
-    const flag = create ? '-b ' : ''
-    execSync(`git checkout ${flag}"${branch}"`, { cwd: workDir, encoding: 'utf-8', timeout: 15000 })
+    const args = create ? ['checkout', '-b', branch] : ['checkout', branch]
+    execFileSync('git', args, { cwd: workDir, encoding: 'utf-8', timeout: 15000 })
     return { success: true }
   } catch (e: any) {
     return { success: false, error: e.stderr || e.message }
