@@ -314,10 +314,14 @@ class BrowserViewManager {
   /**
    * Navigation: Reload
    */
-  reload(viewId: string): boolean {
+  reload(viewId: string, options?: { ignoreCache?: boolean }): boolean {
     const view = this.views.get(viewId)
     if (!view) return false
-    view.webContents.reload()
+    if (options?.ignoreCache) {
+      view.webContents.reloadIgnoringCache()
+    } else {
+      view.webContents.reload()
+    }
     return true
   }
 

@@ -29,11 +29,11 @@ export function convertAnthropicToOpenAIChat(anthropicRequest: AnthropicRequest)
   // Convert tools - just filter invalid ones, don't reject all
   const tools = convertAnthropicToolsToOpenAIChat(anthropicRequest.tools)
 
-  // Build OpenAI request - only include essential parameters
-  // Omit max_tokens/temperature as providers have their own defaults
+  // Build OpenAI request with core generation parameters.
   const openaiRequest: OpenAIChatRequest = {
     model: anthropicRequest.model,
     messages,
+    max_tokens: anthropicRequest.max_tokens,
     stream: anthropicRequest.stream
   }
 

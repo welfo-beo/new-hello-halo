@@ -75,6 +75,13 @@ export default defineConfig({
   // Projects - different test configurations
   projects: [
     {
+      name: 'ci-smoke',
+      testMatch: '**/ci-smoke.spec.ts',
+      use: {
+        actionTimeout: 10000
+      }
+    },
+    {
       name: 'smoke',
       testMatch: '**/smoke.spec.ts',
       use: {

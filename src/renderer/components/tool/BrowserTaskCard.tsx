@@ -195,8 +195,10 @@ export function BrowserTaskCard({ browserToolCalls, isActive }: BrowserTaskCardP
     },
     'browser_navigate': {
       action: t('Navigate'),
-      getDescription: (input: Record<string, unknown>) =>
-        input.action === 'back' ? t('Back') : input.action === 'forward' ? t('Forward') : `${input.url || ''}`
+      getDescription: (input: Record<string, unknown>) => {
+        const navType = (input.type || input.action) as string | undefined
+        return navType === 'back' ? t('Back') : navType === 'forward' ? t('Forward') : `${input.url || ''}`
+      }
     },
     'browser_click': {
       action: t('Click'),

@@ -14,7 +14,10 @@ export default defineConfig({
     environment: 'node',
 
     // Test file patterns
-    include: ['unit/**/*.test.ts'],
+    include: [
+      'unit/**/*.test.ts',
+      '../src/main/openai-compat-router/__tests__/**/*.test.ts'
+    ],
 
     // Root directory for tests
     root: __dirname,
@@ -29,7 +32,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['../src/main/services/**/*.ts'],
+      include: [
+        '../src/main/services/**/*.ts',
+        '../src/main/openai-compat-router/**/*.ts'
+      ],
       exclude: [
         '**/node_modules/**',
         '**/dist/**',

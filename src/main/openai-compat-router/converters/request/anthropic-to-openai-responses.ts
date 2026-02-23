@@ -38,11 +38,11 @@ export function convertAnthropicToOpenAIResponses(anthropicRequest: AnthropicReq
   const tools = convertAnthropicToolsToResponses(anthropicRequest.tools)
   const hasTools = !!tools && tools.length > 0
 
-  // Build request - only include essential parameters
-  // Omit max_output_tokens as many providers don't support it
+  // Build request with core generation parameters.
   const request: OpenAIResponsesRequest = {
     model: anthropicRequest.model,
     input: inputItems,
+    max_output_tokens: anthropicRequest.max_tokens,
     stream: anthropicRequest.stream
   }
 

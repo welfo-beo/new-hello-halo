@@ -249,6 +249,8 @@ npm run dev
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+If you're upgrading Anthropic SDK dependencies, follow [docs/claude-sdk-upgrade.md](docs/claude-sdk-upgrade.md).
+AI Browser automation flow reference: [docs/ai-browser-workflow.md](docs/ai-browser-workflow.md).
 
 ---
 

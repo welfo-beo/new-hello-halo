@@ -23,7 +23,6 @@
 import { registerOnboardingHandlers } from '../ipc/onboarding'
 import { registerRemoteHandlers } from '../ipc/remote'
 import { registerBrowserHandlers } from '../ipc/browser'
-import { registerAIBrowserHandlers, cleanupAIBrowserHandlers } from '../ipc/ai-browser'
 import { registerOverlayHandlers, cleanupOverlayHandlers } from '../ipc/overlay'
 import { initializeSearchHandlers, cleanupSearchHandlers } from '../ipc/search'
 import { registerPerfHandlers } from '../ipc/perf'
@@ -64,10 +63,6 @@ export function initializeExtendedServices(): void {
   // Browser: Embedded BrowserView for Content Canvas
   // Note: BrowserView is created lazily when Canvas is opened
   registerBrowserHandlers(mainWindow)
-
-  // AI Browser: AI automation tools (V2 feature)
-  // Uses lazy initialization - heavy modules loaded on first tool call
-  registerAIBrowserHandlers()
 
   // Overlay: Floating UI elements (chat capsule, etc.)
   // Already implements lazy initialization internally
@@ -130,9 +125,6 @@ export function initializeExtendedServices(): void {
  * Called during window-all-closed to properly release resources.
  */
 export async function cleanupExtendedServices(): Promise<void> {
-  // AI Browser: Cleanup MCP server and browser context
-  cleanupAIBrowserHandlers()
-
   // Overlay: Cleanup overlay BrowserView
   cleanupOverlayHandlers()
 

@@ -17,7 +17,8 @@ import { type FileChangesSummary, extractFileChangesSummaryFromThoughts } from '
 import { notifyTaskComplete } from '../notification.service'
 import {
   AI_BROWSER_SYSTEM_PROMPT,
-  createAIBrowserMcpServer
+  createAIBrowserMcpServer,
+  initializeAIBrowser
 } from '../ai-browser'
 import type {
   AgentRequest,
@@ -160,6 +161,16 @@ export async function sendMessage(
 
     // Get enabled MCP servers
     const enabledMcpServers = getEnabledMcpServers(config.mcpServers || {})
+
+    // Explicitly initialize AI Browser runtime when this request enables browser tools.
+    // This avoids relying on renderer IPC code paths that may never run.
+    if (aiBrowserEnabled) {
+      if (mainWindow) {
+        initializeAIBrowser(mainWindow)
+      } else {
+        console.warn(`[Agent][${conversationId}] AI Browser enabled but mainWindow is null; continuing without renderer sync`)
+      }
+    }
 
     // Build MCP servers config (including AI Browser if enabled)
     const mcpServers: Record<string, any> = enabledMcpServers ? { ...enabledMcpServers } : {}
