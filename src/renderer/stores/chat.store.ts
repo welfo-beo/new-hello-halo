@@ -24,6 +24,7 @@ import { api } from '../api'
 import type { Conversation, ConversationMeta, Message, ToolCall, Artifact, Thought, AgentEventBase, ImageAttachment, CompactInfo, CanvasContext, AgentErrorType, PendingQuestion, Question, TaskStatus, PulseItem } from '../types'
 import { PULSE_READ_GRACE_PERIOD_MS } from '../types'
 import { canvasLifecycle } from '../services/canvas-lifecycle'
+import { useSubagentsStore } from './subagents.store'
 
 // LRU cache size limit
 const CONVERSATION_CACHE_SIZE = 10
@@ -767,7 +768,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
 
-      // Send to agent (with images, AI Browser state, thinking mode, effort, and canvas context)
+      // Resolve subagents from store (per-space)
+      const { spaces } = useSubagentsStore.getState()
+      const { subagents, mode: subagentsMode } = spaces[currentSpaceId] ?? { mode: 'off', subagents: [] }
+
+      if (subagentsMode === 'manual' && subagents.length === 0) {
+        console.warn('[Chat] Subagents mode is manual but no agents are defined — sending without subagents')
+      }
+
+      // Send to agent (with images, AI Browser state, thinking mode, effort, canvas context, and subagents)
       await api.sendMessage({
         spaceId: currentSpaceId,
         conversationId,
@@ -776,6 +785,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         aiBrowserEnabled,
         thinkingMode: thinkingMode as any,
         effort: effort as any,
+        subagents: subagentsMode === 'manual' && subagents.length > 0
+          ? subagents.map(({ id: _id, ...rest }) => rest)
+          : undefined,
+        autoGenerateSubagents: subagentsMode === 'auto' || undefined,
         canvasContext: buildCanvasContext()
       })
     } catch (error) {

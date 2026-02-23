@@ -6,6 +6,36 @@
 
 ---
 
+## Subagents
+
+Per-space custom subagent definitions. Users can define named agents with custom system prompts, tool restrictions, and model selection. The main agent can delegate tasks to these subagents via the `Task` tool.
+
+**Three modes**:
+- `off`: Subagents disabled (default)
+- `manual`: User-defined agents only; main agent sees their names/descriptions and can invoke them
+- `auto`: Built-in general-purpose subagent spawned automatically when parallel work helps
+
+**Key change**: `SubagentDef` (renderer) vs `SubagentDefinition` (main/preload) are separate types — `id` is stripped before IPC to keep the wire format clean.
+
+**Design decisions**:
+- Per-space config stored in `useSubagentsStore` (`zustand/persist`), keyed by `spaceId`
+- `version: 1` + `migrate` handles old persisted data without `id` field (assigns UUIDs on first load)
+- `if (!spaceId) return` guards in all store mutations prevent `spaces['']` pollution
+- Tool picker rendered via `createPortal` to `document.body` to escape `overflow-y-auto` clipping
+- `clearSpace` called on space deletion to avoid stale localStorage entries
+
+**Affected files**:
+- `src/renderer/stores/subagents.store.ts` — New store: `SubagentDef`, `SubagentsMode`, per-space CRUD + persist migration
+- `src/renderer/components/chat/SubagentsPanel.tsx` — New panel: mode selector + agent list/form + `ToolPickerPortal`
+- `src/renderer/components/chat/InputArea.tsx` — Subagents button with mode-aware badge (count / primary dot / amber dot)
+- `src/renderer/stores/chat.store.ts` — Passes subagents to `api.sendMessage`; strips `id` before IPC
+- `src/renderer/stores/space.store.ts` — `deleteSpace` calls `clearSpace`
+- `src/main/services/agent/types.ts` — `SubagentDefinition` type (no `id`)
+- `src/main/services/agent/send-message.ts` — Injects subagent definitions into system prompt
+- `src/preload/index.ts` — Forwards `subagents` field through IPC
+
+---
+
 ## Centralized Space Data Storage
 
 Separates data storage path from project working directory. Previously, custom-path spaces stored Halo data (`.halo/`) inside the user's project directory, requiring manual `.gitignore` and risking data leakage. Now all space data is centralized under `~/.halo/spaces/{uuid}/`.

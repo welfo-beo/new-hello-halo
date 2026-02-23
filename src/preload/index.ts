@@ -105,6 +105,7 @@ export interface HaloAPI {
       tools?: string[]
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
     }>
+    autoGenerateSubagents?: boolean
     canvasContext?: {  // Canvas context for AI awareness
       isOpen: boolean
       tabCount: number

@@ -62,20 +62,20 @@ const FALLBACK_ERROR_HINT = 'Check logs in Settings > System > Logs.'
 // Send Message
 // ============================================
 
-function createSubagentsSignature(subagents: AgentRequest['subagents']): string {
-  if (!subagents || subagents.length === 0) {
-    return ''
+function createSubagentsSignature(subagents: AgentRequest['subagents'], autoGenerate?: boolean): string {
+  const parts: string[] = []
+  if (autoGenerate) parts.push('auto')
+  if (subagents && subagents.length > 0) {
+    const normalized = subagents.map((agent) => ({
+      name: agent.name,
+      description: agent.description,
+      prompt: agent.prompt,
+      tools: agent.tools ? [...agent.tools].sort() : [],
+      model: agent.model || 'inherit'
+    })).sort((a, b) => a.name.localeCompare(b.name))
+    parts.push(JSON.stringify(normalized))
   }
-
-  const normalized = subagents.map((agent) => ({
-    name: agent.name,
-    description: agent.description,
-    prompt: agent.prompt,
-    tools: agent.tools ? [...agent.tools].sort() : [],
-    model: agent.model || 'inherit'
-  })).sort((a, b) => a.name.localeCompare(b.name))
-
-  return JSON.stringify(normalized)
+  return parts.join('|')
 }
 
 /**
@@ -107,6 +107,7 @@ export async function sendMessage(
     thinkingBudget,
     effort,
     subagents,
+    autoGenerateSubagents,
     canvasContext
   } = request
 
@@ -220,6 +221,11 @@ export async function sendMessage(
       }
     }
 
+    // Auto-generate: enable built-in general-purpose subagent via Task tool
+    if (autoGenerateSubagents && !sdkOptions.allowedTools.includes('Task')) {
+      sdkOptions.allowedTools = [...sdkOptions.allowedTools, 'Task']
+    }
+
     const t0 = Date.now()
     console.log(`[Agent][${conversationId}] Getting or creating V2 session...`)
 
@@ -229,11 +235,18 @@ export async function sendMessage(
       console.log(`[Agent][${conversationId}] MCP servers configured: ${mcpServerNames.join(', ')}`)
     }
 
+    // Log subagents configuration
+    if (autoGenerateSubagents) {
+      console.log(`[Agent][${conversationId}] Subagents: auto`)
+    } else if (subagents && subagents.length > 0) {
+      console.log(`[Agent][${conversationId}] Subagents: manual [${subagents.map(a => a.name).join(', ')}]`)
+    }
+
     // Session config for rebuild detection
     const sessionConfig: SessionConfig = {
       aiBrowserEnabled: !!aiBrowserEnabled,
       effort: effort || null,
-      subagentsSignature: createSubagentsSignature(subagents)
+      subagentsSignature: createSubagentsSignature(subagents, autoGenerateSubagents)
     }
 
     // Get or create persistent V2 session for this conversation

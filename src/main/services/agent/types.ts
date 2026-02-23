@@ -112,6 +112,7 @@ export interface AgentRequest {
   thinkingBudget?: number     // Budget tokens for manual thinking mode (default: 10240)
   effort?: EffortLevel        // Effort level: max, high, medium, low
   subagents?: SubagentDefinition[]  // Custom subagent definitions
+  autoGenerateSubagents?: boolean   // Let Claude autonomously spawn built-in general-purpose subagent
   model?: string              // Model to use (for future model switching)
   canvasContext?: CanvasContext  // Current canvas state for AI awareness
 }
