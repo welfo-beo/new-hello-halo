@@ -30,6 +30,7 @@ import type {
 import {
   getHeadlessElectronPath,
   getWorkingDir,
+  getSpaceDir,
   getApiCredentials,
   getEnabledMcpServers,
   sendToRenderer,
@@ -120,6 +121,7 @@ export async function sendMessage(
 
   const config = getConfig()
   const workDir = getWorkingDir(spaceId)
+  const spaceDir = getSpaceDir(spaceId)
 
   // Create abort controller for this session
   const abortController = new AbortController()
@@ -182,7 +184,8 @@ export async function sendMessage(
         stderrBuffer += data  // Accumulate for error reporting
       },
       mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : null,
-      maxTurns: config.agent?.maxTurns
+      maxTurns: config.agent?.maxTurns,
+      spaceDir
     })
 
     // Apply dynamic configurations (AI Browser system prompt, Thinking mode, Effort, Subagents)
