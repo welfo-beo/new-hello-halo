@@ -21,6 +21,8 @@ interface SubagentsState {
   addSubagent: (spaceId: string, agent: Omit<SubagentDef, 'id'>) => void
   updateSubagent: (spaceId: string, id: string, agent: Omit<SubagentDef, 'id'>) => void
   removeSubagent: (spaceId: string, id: string) => void
+  reorderSubagents: (spaceId: string, fromIndex: number, toIndex: number) => void
+  copySubagentsToSpace: (fromSpaceId: string, toSpaceId: string, agentIds: string[]) => void
   clearSpace: (spaceId: string) => void
 }
 
@@ -53,6 +55,29 @@ export const useSubagentsStore = create<SubagentsState>()(
         set((s) => {
           const cfg = s.spaces[spaceId] ?? DEFAULT_CONFIG
           return { spaces: { ...s.spaces, [spaceId]: { ...cfg, subagents: cfg.subagents.filter(a => a.id !== id) } } }
+        })
+      },
+      reorderSubagents: (spaceId, fromIndex, toIndex) => {
+        if (!spaceId) return
+        set((s) => {
+          const cfg = s.spaces[spaceId] ?? DEFAULT_CONFIG
+          const arr = [...cfg.subagents]
+          const [item] = arr.splice(fromIndex, 1)
+          arr.splice(toIndex, 0, item)
+          return { spaces: { ...s.spaces, [spaceId]: { ...cfg, subagents: arr } } }
+        })
+      },
+      copySubagentsToSpace: (fromSpaceId, toSpaceId, agentIds) => {
+        if (!fromSpaceId || !toSpaceId) return
+        set((s) => {
+          const src = s.spaces[fromSpaceId] ?? DEFAULT_CONFIG
+          const dst = s.spaces[toSpaceId] ?? DEFAULT_CONFIG
+          const toCopy = src.subagents.filter(a => agentIds.includes(a.id))
+          const existingNames = new Set(dst.subagents.map(a => a.name))
+          const newAgents = toCopy
+            .filter(a => !existingNames.has(a.name))
+            .map(a => ({ ...a, id: crypto.randomUUID() }))
+          return { spaces: { ...s.spaces, [toSpaceId]: { ...dst, subagents: [...dst.subagents, ...newAgents] } } }
         })
       },
       clearSpace: (spaceId) => set((s) => {

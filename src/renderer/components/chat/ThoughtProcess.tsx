@@ -14,6 +14,7 @@ import {
   ChevronUp,
   Loader2,
   Braces,
+  GitBranch,
 } from 'lucide-react'
 import { TodoCard, parseTodoInput } from '../tool/TodoCard'
 import { ToolResultViewer } from './tool-result'
@@ -341,6 +342,106 @@ const ThoughtItem = memo(function ThoughtItem({ thought, isLast }: { thought: Th
 // Estimated height placeholder prevents layout jumps.
 const THOUGHT_ITEM_ESTIMATED_HEIGHT = 60
 
+// Parallel Task group: shows multiple Task subagents running side-by-side
+const ParallelTaskGroup = memo(function ParallelTaskGroup({ tasks }: { tasks: Thought[] }) {
+  const { t } = useTranslation()
+  const doneCount = tasks.filter(t => t.toolResult).length
+  const allDone = doneCount === tasks.length
+  const anyError = tasks.some(t => t.toolResult?.isError)
+  const progress = tasks.length > 0 ? (doneCount / tasks.length) * 100 : 0
+
+  return (
+    <div className="flex gap-3 animate-fade-in mb-1">
+      {/* Timeline icon */}
+      <div className="flex flex-col items-center flex-shrink-0">
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
+          allDone
+            ? anyError ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/10 text-primary'
+            : 'bg-primary/20 text-primary'
+        }`}>
+          {allDone
+            ? anyError ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />
+            : <Loader2 size={14} className="animate-spin" />
+          }
+        </div>
+        <div className="w-0.5 flex-1 bg-border/30 mt-1" />
+      </div>
+
+      {/* Cards */}
+      <div className="flex-1 pb-4 min-w-0">
+        {/* Header with progress */}
+        <div className="flex items-center gap-2 mb-2">
+          <GitBranch size={11} className="text-primary/60 flex-shrink-0" />
+          <span className="text-xs font-medium text-primary/70">
+            {t('{{n}} parallel agents', { n: tasks.length })}
+          </span>
+          <span className="text-xs text-muted-foreground/50">
+            {doneCount}/{tasks.length}
+          </span>
+          {/* Progress bar */}
+          <div className="flex-1 h-1 bg-border/30 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${anyError ? 'bg-amber-500/60' : 'bg-primary/60'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Agent cards grid */}
+        <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(tasks.length, 2)}, 1fr)` }}>
+          {tasks.map((task, idx) => {
+            const desc = typeof task.toolInput?.description === 'string'
+              ? task.toolInput.description
+              : (task.toolInput?.prompt as string) ?? '...'
+            const isDone = !!task.toolResult
+            const isErr = task.toolResult?.isError
+            const agentLabel = (task.toolInput?.subagent_type as string) || `Agent ${idx + 1}`
+
+            return (
+              <div
+                key={task.id}
+                className={`rounded-lg border px-2.5 py-2 text-xs transition-all duration-300 ${
+                  isDone
+                    ? isErr
+                      ? 'border-amber-500/30 bg-amber-500/5'
+                      : 'border-primary/20 bg-primary/5'
+                    : 'border-primary/40 bg-primary/10 shadow-[0_0_8px_rgba(var(--primary-rgb),0.08)]'
+                }`}
+              >
+                {/* Agent header */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  {isDone
+                    ? isErr
+                      ? <AlertTriangle size={10} className="text-amber-500 flex-shrink-0" />
+                      : <CheckCircle2 size={10} className="text-primary flex-shrink-0" />
+                    : <Loader2 size={10} className="text-primary animate-spin flex-shrink-0" />
+                  }
+                  <span className="text-[10px] text-muted-foreground/50 font-mono truncate">{agentLabel}</span>
+                  {isDone && (
+                    <span className={`ml-auto text-[9px] font-medium ${isErr ? 'text-amber-500' : 'text-primary/60'}`}>
+                      {isErr ? t('Error') : t('Done')}
+                    </span>
+                  )}
+                </div>
+                {/* Task description */}
+                <p className={`font-medium leading-snug ${isDone ? 'text-foreground/70' : 'text-foreground/90'}`}>
+                  {truncateText(desc, 50)}
+                </p>
+                {/* Result preview */}
+                {isDone && task.toolResult?.output && !isErr && (
+                  <p className="text-muted-foreground/50 line-clamp-1 mt-1 text-[10px]">
+                    {task.toolResult.output.slice(0, 100)}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+})
+
 function LazyThoughtItem({
   thought,
   isLast,
@@ -420,6 +521,44 @@ export function ThoughtProcess({ thoughts, isThinking }: ThoughtProcessProps) {
     })
   }, [thoughts])
 
+  // Group consecutive parallel Task calls into clusters for visualization.
+  // Two Task thoughts are "parallel" if they share the same timestamp second
+  // (they were emitted in the same SDK turn / single message).
+  type DisplayItem =
+    | { kind: 'thought'; thought: Thought }
+    | { kind: 'parallel'; tasks: Thought[] }
+
+  const displayItems = useMemo((): DisplayItem[] => {
+    const items: DisplayItem[] = []
+    let i = 0
+    while (i < displayThoughts.length) {
+      const t = displayThoughts[i]
+      if (t.type === 'tool_use' && t.toolName === 'Task') {
+        // Collect consecutive Task thoughts with the same timestamp-second
+        const sec = t.timestamp.slice(0, 19)
+        const group: Thought[] = [t]
+        let j = i + 1
+        while (
+          j < displayThoughts.length &&
+          displayThoughts[j].type === 'tool_use' &&
+          displayThoughts[j].toolName === 'Task' &&
+          displayThoughts[j].timestamp.slice(0, 19) === sec
+        ) {
+          group.push(displayThoughts[j])
+          j++
+        }
+        if (group.length > 1) {
+          items.push({ kind: 'parallel', tasks: group })
+          i = j
+          continue
+        }
+      }
+      items.push({ kind: 'thought', thought: t })
+      i++
+    }
+    return items
+  }, [displayThoughts])
+
   // Smart auto-scroll: only scrolls when user is at bottom
   // Stops auto-scroll when user scrolls up to read history
   const { handleScroll } = useSmartScroll({
@@ -438,7 +577,7 @@ export function ThoughtProcess({ thoughts, isThinking }: ThoughtProcessProps) {
   const errorCount = thoughts.filter(t => t.type === 'error').length
 
   // Check if there's content to show in the scrollable area
-  const hasDisplayContent = displayThoughts.length > 0
+  const hasDisplayContent = displayItems.length > 0
 
   return (
     <div className="animate-fade-in mb-4">
@@ -503,18 +642,16 @@ export function ThoughtProcess({ thoughts, isThinking }: ThoughtProcessProps) {
                 onScroll={handleScroll}
                 className={`px-4 pt-3 ${isMaximized ? 'max-h-[80vh]' : 'max-h-[300px]'} overflow-auto scrollbar-overlay transition-all duration-200`}
               >
-                {displayThoughts.map((thought, index) => {
-                  const isLast = index === displayThoughts.length - 1 && !latestTodos && !isThinking
-                  // Last 3 items render eagerly (near the scroll bottom where the
-                  // user is watching during streaming). The rest lazy-load via IO.
-                  // Using a single component type for all items avoids React
-                  // unmount/remount when an item shifts from "recent" to "old"
-                  // as new thoughts arrive — which previously caused 1-2 frame flicker.
-                  const isRecentItem = index >= displayThoughts.length - 3
+                {displayItems.map((item, index) => {
+                  const isLast = index === displayItems.length - 1 && !latestTodos && !isThinking
+                  const isRecentItem = index >= displayItems.length - 3
+                  if (item.kind === 'parallel') {
+                    return <ParallelTaskGroup key={item.tasks[0].id} tasks={item.tasks} />
+                  }
                   return (
                     <LazyThoughtItem
-                      key={thought.id}
-                      thought={thought}
+                      key={item.thought.id}
+                      thought={item.thought}
                       isLast={isLast}
                       scrollContainerRef={contentRef}
                       eager={isRecentItem}
@@ -532,7 +669,7 @@ export function ThoughtProcess({ thoughts, isThinking }: ThoughtProcessProps) {
             )}
 
             {/* Maximize toggle - bottom right, heuristic: show when likely to overflow */}
-            {(displayThoughts.length > 8 || isMaximized) && (
+            {(displayItems.length > 8 || isMaximized) && (
               <div className="flex justify-end px-4 pb-2">
                 <button
                   onClick={() => setIsMaximized(!isMaximized)}

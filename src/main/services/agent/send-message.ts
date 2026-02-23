@@ -204,14 +204,24 @@ export async function sendMessage(
       sdkOptions.effort = effort
     }
 
+    // Map effort level to a fallback model for subagents that use 'inherit'
+    // effort=low→haiku, effort=medium→haiku, effort=high→(inherit main), effort=max→opus
+    const effortFallbackModel = effort === 'low' || effort === 'medium' ? 'haiku'
+      : effort === 'max' ? 'opus'
+      : undefined  // high: let subagent inherit main model
+
     // Subagent definitions
     if (subagents && subagents.length > 0) {
       sdkOptions.agents = subagents.reduce((acc, agent) => {
+        // Resolve model: explicit > effort-derived fallback > inherit
+        const resolvedModel = (agent.model && agent.model !== 'inherit')
+          ? agent.model
+          : effortFallbackModel
         acc[agent.name] = {
           description: agent.description,
           prompt: agent.prompt,
           ...(agent.tools && { tools: agent.tools }),
-          ...(agent.model && agent.model !== 'inherit' && { model: agent.model })
+          ...(resolvedModel && { model: resolvedModel })
         }
         return acc
       }, {} as Record<string, any>)
