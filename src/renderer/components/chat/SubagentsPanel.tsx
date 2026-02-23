@@ -1,14 +1,53 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Trash2, Edit2, X, Check, Bot, Sparkles, ChevronDown, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Edit2, X, Check, Bot, Sparkles, ChevronDown, AlertCircle, GripVertical, Copy, Download, Upload, LayoutTemplate, GitBranch, Zap } from 'lucide-react'
 import { useSubagentsStore, type SubagentDef, type SubagentsMode } from '../../stores/subagents.store'
+import { useSpaceStore } from '../../stores/space.store'
 import { useTranslation } from '../../i18n'
 
 type AgentForm = Omit<SubagentDef, 'id'>
 
+const AGENT_TEMPLATES: AgentForm[] = [
+  {
+    name: 'code-reviewer',
+    description: 'Expert code review specialist. Use for quality, security, and maintainability reviews.',
+    prompt: 'You are a code review specialist. Identify security vulnerabilities, performance issues, and suggest specific improvements. Be thorough but concise.',
+    tools: ['Read', 'Grep', 'Glob'],
+    model: 'sonnet',
+  },
+  {
+    name: 'test-runner',
+    description: 'Runs and analyzes test suites. Use for test execution and coverage analysis.',
+    prompt: 'You are a test execution specialist. Run tests, analyze output, identify failing tests, and suggest fixes.',
+    tools: ['Bash', 'Read', 'Grep'],
+    model: 'inherit',
+  },
+  {
+    name: 'security-scanner',
+    description: 'Security vulnerability scanner. Use for auditing code for security issues.',
+    prompt: 'You are a security expert. Scan code for OWASP top 10 vulnerabilities, injection flaws, and insecure configurations. Report findings clearly.',
+    tools: ['Read', 'Grep', 'Glob'],
+    model: 'opus',
+  },
+  {
+    name: 'doc-writer',
+    description: 'Documentation writer. Use for generating or improving code documentation.',
+    prompt: 'You are a technical writer. Write clear, concise documentation including JSDoc/docstrings, README sections, and inline comments.',
+    tools: ['Read', 'Edit', 'Write', 'Glob'],
+    model: 'haiku',
+  },
+  {
+    name: 'refactor-agent',
+    description: 'Code refactoring specialist. Use for improving code structure and readability.',
+    prompt: 'You are a refactoring expert. Improve code structure, reduce duplication, apply design patterns, and maintain existing behavior.',
+    tools: ['Read', 'Edit', 'Write', 'Grep', 'Glob'],
+    model: 'sonnet',
+  },
+]
+
 const TOOL_OPTIONS = ['Read', 'Edit', 'Write', 'Bash', 'Grep', 'Glob', 'Task']
 const MODEL_OPTIONS: Array<{ value: NonNullable<SubagentDef['model']>; label: string }> = [
-  { value: 'inherit', label: 'Inherit' },
+  { value: 'inherit', label: 'Same as main' },
   { value: 'haiku', label: 'Haiku' },
   { value: 'sonnet', label: 'Sonnet' },
   { value: 'opus', label: 'Opus' },
@@ -165,6 +204,130 @@ function SubagentForm({ initial, existingNames, editingName, onSave, onCancel }:
   )
 }
 
+const MODEL_COLORS: Record<string, string> = {
+  opus: 'bg-purple-500/15 text-purple-500',
+  sonnet: 'bg-blue-500/15 text-blue-500',
+  haiku: 'bg-emerald-500/15 text-emerald-500',
+}
+
+function AgentAvatar({ name }: { name: string }) {
+  const letter = name.charAt(0).toUpperCase()
+  // Generate a stable hue from the name
+  const hue = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360
+  return (
+    <div
+      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 text-white"
+      style={{ background: `hsl(${hue}, 60%, 45%)` }}
+    >
+      {letter}
+    </div>
+  )
+}
+
+function AgentCard({ agent, onEdit, onRemove, onCopyTo, onDragStart, onDragOver, onDrop, isDragging }: {
+  agent: SubagentDef
+  onEdit: () => void
+  onRemove: () => void
+  onCopyTo?: () => void
+  onDragStart: () => void
+  onDragOver: (e: React.DragEvent) => void
+  onDrop: () => void
+  isDragging: boolean
+}) {
+  const modelColor = agent.model && agent.model !== 'inherit' ? MODEL_COLORS[agent.model] ?? 'bg-muted text-muted-foreground' : null
+  return (
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={`p-2.5 bg-muted/20 rounded-xl border transition-colors group ${
+        isDragging ? 'opacity-40 border-primary/40' : 'border-border/40 hover:border-border/70 hover:bg-muted/30'
+      }`}
+    >
+      <div className="flex items-start gap-2.5">
+        <div className="cursor-grab active:cursor-grabbing mt-0.5 text-muted-foreground/40 hover:text-muted-foreground flex-shrink-0">
+          <GripVertical size={14} />
+        </div>
+        <AgentAvatar name={agent.name} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-sm font-medium truncate">{agent.name}</span>
+            {modelColor && (
+              <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-md flex-shrink-0 ${modelColor}`}>
+                {agent.model}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{agent.description}</p>
+          {agent.tools && agent.tools.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {agent.tools.map(tool => (
+                <span key={tool} className="px-1.5 py-0.5 text-[10px] bg-primary/10 text-primary rounded-md font-medium">
+                  {tool}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          {onCopyTo && (
+            <button onClick={onCopyTo} className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+              <Copy size={13} />
+            </button>
+          )}
+          <button onClick={onEdit} className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+            <Edit2 size={13} />
+          </button>
+          <button onClick={onRemove} className="p-1 text-muted-foreground hover:text-destructive rounded-md hover:bg-muted">
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TemplatesPanel({ existingNames, onSelect, onClose }: {
+  existingNames: string[]
+  onSelect: (tpl: AgentForm) => void
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-muted-foreground">{t('Templates')}</span>
+        <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">{t('Cancel')}</button>
+      </div>
+      {AGENT_TEMPLATES.map(tpl => {
+        const taken = existingNames.includes(tpl.name)
+        return (
+          <button
+            key={tpl.name}
+            disabled={taken}
+            onClick={() => !taken && onSelect(tpl)}
+            className={`w-full text-left p-2.5 rounded-xl border transition-colors ${
+              taken
+                ? 'border-border/20 bg-muted/10 opacity-40 cursor-not-allowed'
+                : 'border-border/40 bg-muted/20 hover:border-primary/40 hover:bg-muted/40'
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium">{tpl.name}</span>
+              {tpl.model && tpl.model !== 'inherit' && (
+                <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-md ${MODEL_COLORS[tpl.model] ?? ''}`}>{tpl.model}</span>
+              )}
+              {taken && <span className="text-[10px] text-muted-foreground ml-auto">{t('Already added')}</span>}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{tpl.description}</p>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 interface SubagentsPanelProps {
   spaceId: string
   onClose: () => void
@@ -172,12 +335,60 @@ interface SubagentsPanelProps {
 
 export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
   const { t } = useTranslation()
-  const { setMode, addSubagent, updateSubagent, removeSubagent } = useSubagentsStore()
+  const { setMode, addSubagent, updateSubagent, removeSubagent, reorderSubagents, copySubagentsToSpace } = useSubagentsStore()
   const { mode, subagents } = useSubagentsStore(s => s.spaces[spaceId] ?? { mode: 'off' as SubagentsMode, subagents: [] })
+  const allSpaces = useSpaceStore(s => s.spaces)
+  const otherSpaces = allSpaces.filter(s => s.id !== spaceId)
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [showCopyTo, setShowCopyTo] = useState<string | null>(null) // agentId being copied
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
 
   const existingNames = subagents.map(a => a.name)
+
+  const handleDrop = (toIndex: number) => {
+    if (dragIndex !== null && dragIndex !== toIndex) {
+      reorderSubagents(spaceId, dragIndex, toIndex)
+    }
+    setDragIndex(null)
+  }
+
+  const handleExport = () => {
+    const data = JSON.stringify(subagents.map(({ id: _id, ...rest }) => rest), null, 2)
+    const blob = new Blob([data], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'subagents.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target?.result as string)
+          const agents: AgentForm[] = Array.isArray(parsed) ? parsed : [parsed]
+          agents.forEach(a => {
+            if (a.name && a.description && a.prompt && !existingNames.includes(a.name)) {
+              addSubagent(spaceId, a)
+            }
+          })
+        } catch { /* invalid json */ }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
+  }
 
   const MODES: Array<{ value: SubagentsMode; label: string; icon?: React.ReactNode }> = [
     { value: 'off', label: t('Off') },
@@ -187,16 +398,45 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
 
   return (
     <div className="absolute bottom-full right-0 mb-2 w-[380px] max-w-[calc(100vw-2rem)]
-      max-h-[500px] overflow-y-auto bg-popover border border-border rounded-2xl shadow-xl z-30 animate-fade-in">
+      max-h-[560px] overflow-y-auto bg-popover border border-border rounded-2xl shadow-xl z-30 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 sticky top-0 bg-popover z-50">
         <div className="flex items-center gap-2">
           <Bot size={15} className="text-primary" />
           <span className="text-sm font-medium">{t('Subagents')}</span>
+          {mode === 'manual' && subagents.length >= 2 && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-primary/10 text-primary/70">
+              <GitBranch size={9} />
+              {t('×{{n}} parallel', { n: subagents.length })}
+            </span>
+          )}
+          {mode === 'auto' && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-primary/10 text-primary/70">
+              <Zap size={9} />
+              {t('Auto')}
+            </span>
+          )}
         </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X size={15} />
-        </button>
+        <div className="flex items-center gap-1">
+          {mode === 'manual' && subagents.length > 0 && (
+            <>
+              <button onClick={handleExport} title={t('Export')} className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+                <Download size={13} />
+              </button>
+              <button onClick={handleImport} title={t('Import')} className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+                <Upload size={13} />
+              </button>
+            </>
+          )}
+          {mode === 'manual' && subagents.length === 0 && (
+            <button onClick={handleImport} title={t('Import')} className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+              <Upload size={13} />
+            </button>
+          )}
+          <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+            <X size={15} />
+          </button>
+        </div>
       </div>
 
       <div className="p-3 space-y-3">
@@ -218,30 +458,108 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
           ))}
         </div>
 
-        {/* Mode description */}
         {mode === 'auto' && (
-          <div className="text-xs text-muted-foreground bg-primary/5 border border-primary/10 rounded-lg px-3 py-2">
-            {t('Claude will autonomously spawn a built-in general-purpose subagent when parallel work helps.')}
+          <div className="space-y-2.5">
+            <div className="text-xs text-muted-foreground bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 leading-relaxed">
+              {t('Claude autonomously decides how many agents to spawn and what each one does — optimized for your task.')}
+            </div>
+
+            {/* Parallel execution diagram */}
+            <div className="rounded-xl border border-border/40 bg-muted/20 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Zap size={11} className="text-primary/70" />
+                <span className="text-[11px] font-medium text-muted-foreground">{t('How it works')}</span>
+              </div>
+
+              {/* Step 1: single task in */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[9px] font-bold text-primary">1</span>
+                </div>
+                <div className="flex-1 h-px bg-border/40" />
+                <div className="px-2 py-1 rounded-md bg-background border border-border/50 text-[10px] text-muted-foreground">
+                  {t('Your task')}
+                </div>
+              </div>
+
+              {/* Step 2: fan-out to parallel agents */}
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[9px] font-bold text-primary">2</span>
+                </div>
+                <div className="flex-1 grid grid-cols-3 gap-1">
+                  {['Agent A', 'Agent B', 'Agent C'].map((a, i) => (
+                    <div key={a} className={`px-1.5 py-1.5 rounded-md border text-center text-[10px] font-medium ${
+                      i === 0 ? 'border-blue-500/30 bg-blue-500/8 text-blue-400' :
+                      i === 1 ? 'border-violet-500/30 bg-violet-500/8 text-violet-400' :
+                      'border-emerald-500/30 bg-emerald-500/8 text-emerald-400'
+                    }`}>
+                      <GitBranch size={9} className="inline mr-0.5 opacity-70" />
+                      {a}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 3: synthesize */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[9px] font-bold text-primary">3</span>
+                </div>
+                <div className="flex-1 h-px bg-border/40" />
+                <div className="px-2 py-1 rounded-md bg-primary/10 border border-primary/20 text-[10px] text-primary font-medium">
+                  {t('Synthesized result')}
+                </div>
+              </div>
+            </div>
+
+            {/* Decision rules */}
+            <div className="space-y-1">
+              {[
+                { n: '2', desc: t('Separable concerns (e.g. frontend + backend)') },
+                { n: '3', desc: t('Larger tasks (explore + test + config)') },
+                { n: '4+', desc: t('Genuinely independent large workstreams') },
+              ].map(row => (
+                <div key={row.n} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-6 text-center font-bold text-primary/70 flex-shrink-0">{row.n}</span>
+                  <span className="text-muted-foreground">{row.desc}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Agent list (only shown in manual mode) */}
         {mode === 'manual' && (
           <>
-            {subagents.length === 0 && !showAddForm ? (
+            {showTemplates ? (
+              <TemplatesPanel
+                existingNames={existingNames}
+                onSelect={(tpl) => { addSubagent(spaceId, tpl); setShowTemplates(false) }}
+                onClose={() => setShowTemplates(false)}
+              />
+            ) : subagents.length === 0 && !showAddForm ? (
               <div className="flex flex-col items-center gap-2 py-6 text-center">
                 <Bot size={28} className="text-muted-foreground/30" />
                 <div className="text-sm text-muted-foreground">{t('No agents defined yet')}</div>
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="mt-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                >
-                  {t('Add first agent')}
-                </button>
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={() => setShowTemplates(true)}
+                    className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted/50 flex items-center gap-1.5"
+                  >
+                    <LayoutTemplate size={13} />
+                    {t('From template')}
+                  </button>
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                  >
+                    {t('Add first agent')}
+                  </button>
+                </div>
               </div>
             ) : (
               <>
-                {subagents.map((agent) => (
+                {subagents.map((agent, index) => (
                   <div key={agent.id}>
                     {editingId === agent.id ? (
                       <SubagentForm
@@ -251,36 +569,35 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
                         onSave={(a) => { updateSubagent(spaceId, agent.id, a); setEditingId(null) }}
                         onCancel={() => setEditingId(null)}
                       />
-                    ) : (
-                      <div className="flex items-start gap-2 p-2.5 bg-muted/30 rounded-xl border border-border/40 group">
-                        <Bot size={14} className="text-primary mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <div className="text-sm font-medium truncate">{agent.name}</div>
-                            {agent.model && agent.model !== 'inherit' && (
-                              <span className="px-1.5 py-0.5 text-[10px] bg-muted text-muted-foreground rounded flex-shrink-0">{agent.model}</span>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground line-clamp-1">{agent.description}</div>
-                          {agent.tools && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {agent.tools.map(tool => (
-                                <span key={tool} className="px-1.5 py-0.5 text-[10px] bg-primary/10 text-primary rounded">
-                                  {tool}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                    ) : showCopyTo === agent.id ? (
+                      <div className="p-2.5 bg-muted/20 rounded-xl border border-primary/30 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium">{t('Copy to space')}</span>
+                          <button onClick={() => setShowCopyTo(null)} className="text-xs text-muted-foreground hover:text-foreground">{t('Cancel')}</button>
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setEditingId(agent.id)} className="p-1 text-muted-foreground hover:text-foreground">
-                            <Edit2 size={13} />
+                        {otherSpaces.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">{t('No other spaces available')}</p>
+                        ) : otherSpaces.map(sp => (
+                          <button
+                            key={sp.id}
+                            onClick={() => { copySubagentsToSpace(spaceId, sp.id, [agent.id]); setShowCopyTo(null) }}
+                            className="w-full text-left px-2.5 py-1.5 text-sm rounded-lg hover:bg-muted/50 truncate"
+                          >
+                            {sp.name}
                           </button>
-                          <button onClick={() => { removeSubagent(spaceId, agent.id); setEditingId(null) }} className="p-1 text-muted-foreground hover:text-destructive">
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        ))}
                       </div>
+                    ) : (
+                      <AgentCard
+                        agent={agent}
+                        onEdit={() => setEditingId(agent.id)}
+                        onRemove={() => { removeSubagent(spaceId, agent.id); setEditingId(null) }}
+                        onCopyTo={otherSpaces.length > 0 ? () => setShowCopyTo(agent.id) : undefined}
+                        onDragStart={() => setDragIndex(index)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => handleDrop(index)}
+                        isDragging={dragIndex === index}
+                      />
                     )}
                   </div>
                 ))}
@@ -293,14 +610,23 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
                     onCancel={() => setShowAddForm(false)}
                   />
                 ) : (
-                  <button
-                    onClick={() => setShowAddForm(true)}
-                    className="w-full py-2 flex items-center justify-center gap-2 text-sm text-muted-foreground
-                      border border-dashed border-border/60 rounded-xl hover:border-primary/40 hover:text-primary transition-colors"
-                  >
-                    <Plus size={14} />
-                    {t('Add agent')}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowTemplates(true)}
+                      className="flex-none px-2.5 py-2 flex items-center gap-1.5 text-sm text-muted-foreground
+                        border border-dashed border-border/60 rounded-xl hover:border-primary/40 hover:text-primary transition-colors"
+                    >
+                      <LayoutTemplate size={14} />
+                    </button>
+                    <button
+                      onClick={() => setShowAddForm(true)}
+                      className="flex-1 py-2 flex items-center justify-center gap-2 text-sm text-muted-foreground
+                        border border-dashed border-border/60 rounded-xl hover:border-primary/40 hover:text-primary transition-colors"
+                    >
+                      <Plus size={14} />
+                      {t('Add agent')}
+                    </button>
+                  </div>
                 )}
               </>
             )}
