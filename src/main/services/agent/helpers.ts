@@ -147,6 +147,21 @@ export function getWorkingDir(spaceId: string): string {
   return getTempSpacePath()
 }
 
+/**
+ * Get canonical space directory for a space.
+ *
+ * Unlike getWorkingDir(), this always resolves to the space root path,
+ * which is where per-space metadata such as `.halo/CLAUDE.md` lives.
+ */
+export function getSpaceDir(spaceId: string): string | undefined {
+  if (spaceId === 'halo-temp') {
+    return getTempSpacePath()
+  }
+
+  const space = getSpace(spaceId)
+  return space?.path
+}
+
 // ============================================
 // API Credentials
 // ============================================

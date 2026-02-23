@@ -30,10 +30,13 @@ import { SpaceSelector } from '../components/layout/SpaceSelector'
 import { ModelSelector } from '../components/layout/ModelSelector'
 import { ContentCanvas } from '../components/canvas'
 import { GitBashWarningBanner } from '../components/setup/GitBashWarningBanner'
+import { AgentWorkspacePanel } from '../components/workspace/AgentWorkspacePanel'
+import { AgentAtomBar } from '../components/workspace/AgentAtomBar'
+import { useWorkspaceStore } from '../stores/agent-workspace.store'
 import { api } from '../api'
 import { useLayoutPreferences } from '../hooks/useLayoutPreferences'
 import { useWindowMaximize } from '../components/canvas/viewers/useWindowMaximize'
-import { X, MessageSquare } from 'lucide-react'
+import { X, MessageSquare, Zap } from 'lucide-react'
 import { SearchIcon } from '../components/search/SearchIcon'
 import { useSearchShortcuts } from '../hooks/useSearchShortcuts'
 import { useTranslation } from '../i18n'
@@ -63,6 +66,8 @@ export function SpacePage() {
   const artifactRailWidthConfig = useAppStore(state => state.config?.layout?.artifactRailWidth)
 
   const currentSpace = useSpaceStore(state => state.currentSpace)
+
+  const { isOpen: isWorkspaceOpen, setOpen: setWorkspaceOpen } = useWorkspaceStore()
 
   // For mobile ChatHistoryPanel visibility check
   const hasConversations = useChatStore(state => {
@@ -358,6 +363,15 @@ export function SpacePage() {
               <span className="hidden sm:inline">{t('New conversation')}</span>
             </button>
 
+            {/* Workspace toggle button */}
+            <button
+              onClick={() => setWorkspaceOpen(!isWorkspaceOpen)}
+              className={`p-1.5 rounded-lg transition-colors ${isWorkspaceOpen ? 'bg-primary/10 text-primary' : 'hover:bg-secondary'}`}
+              title={t('Agent Workspace')}
+            >
+              <Zap className="w-4 h-4" />
+            </button>
+
             {/* Search Icon - hidden on mobile, accessible via shortcut */}
             <div className="hidden sm:block">
               <SearchIcon onClick={openSearch} isInSpace={true} />
@@ -389,8 +403,20 @@ export function SpacePage() {
         />
       )}
 
+      {/* Atomic bar - shows active agent tasks as pills (原子屏) */}
+      {!isCanvasMaximized && (
+        <AgentAtomBar onOpenWorkspace={() => setWorkspaceOpen(true)} />
+      )}
+
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Agent Workspace Panel - 负一屏, slide in from left */}
+        {!isMobile && isWorkspaceOpen && !isCanvasMaximized && (
+          <div className="w-72 flex-shrink-0 animate-slide-in-left">
+            <AgentWorkspacePanel onClose={() => setWorkspaceOpen(false)} />
+          </div>
+        )}
+
         {/* Conversation list sidebar - CSS hidden when collapsed or maximized, unmounted on mobile */}
         {!isMobile && (
           <div style={{ display: showConversationList && !isCanvasMaximized ? 'flex' : 'none' }}>

@@ -319,6 +319,27 @@ export interface HaloAPI {
   generateHealthReportText: () => Promise<IpcResponse<string>>
   exportHealthReport: (filePath?: string) => Promise<IpcResponse<HealthExportResponse>>
   runHealthCheck: () => Promise<IpcResponse<HealthCheckResponse>>
+
+  // Memory (CLAUDE.md)
+  memoryRead: (scope: 'global' | 'space', spaceDir?: string) => Promise<IpcResponse>
+  memoryWrite: (scope: 'global' | 'space', content: string, spaceDir?: string) => Promise<IpcResponse>
+
+  // Hooks
+  hooksGet: () => Promise<IpcResponse>
+  hooksSet: (hooks: Record<string, unknown>) => Promise<IpcResponse>
+
+  // Skills
+  skillsList: (spaceDir?: string) => Promise<IpcResponse>
+  skillsSave: (name: string, content: string, scope: 'global' | 'space', spaceDir?: string) => Promise<IpcResponse>
+  skillsDelete: (filePath: string) => Promise<IpcResponse>
+
+  // File Search
+  fileSearch: (query: string, spaceId: string) => Promise<IpcResponse>
+
+  // Git
+  gitStatus: (spaceId: string) => Promise<IpcResponse>
+  gitDiff: (spaceId: string, filePath?: string, staged?: boolean) => Promise<IpcResponse>
+  gitLog: (spaceId: string, limit?: number) => Promise<IpcResponse>
 }
 
 interface IpcResponse<T = unknown> {
@@ -551,6 +572,27 @@ const api: HaloAPI = {
   generateHealthReportText: () => ipcRenderer.invoke('health:generate-report-text'),
   exportHealthReport: (filePath) => ipcRenderer.invoke('health:export-report', filePath),
   runHealthCheck: () => ipcRenderer.invoke('health:run-check'),
+
+  // Memory (CLAUDE.md)
+  memoryRead: (scope, spaceDir) => ipcRenderer.invoke('memory:read', scope, spaceDir),
+  memoryWrite: (scope, content, spaceDir) => ipcRenderer.invoke('memory:write', scope, content, spaceDir),
+
+  // Hooks
+  hooksGet: () => ipcRenderer.invoke('hooks:get'),
+  hooksSet: (hooks) => ipcRenderer.invoke('hooks:set', hooks),
+
+  // Skills
+  skillsList: (spaceDir) => ipcRenderer.invoke('skills:list', spaceDir),
+  skillsSave: (name, content, scope, spaceDir) => ipcRenderer.invoke('skills:save', name, content, scope, spaceDir),
+  skillsDelete: (filePath) => ipcRenderer.invoke('skills:delete', filePath),
+
+  // File Search
+  fileSearch: (query, spaceId) => ipcRenderer.invoke('file-search:execute', query, spaceId),
+
+  // Git
+  gitStatus: (spaceId) => ipcRenderer.invoke('git:status', spaceId),
+  gitDiff: (spaceId, filePath, staged) => ipcRenderer.invoke('git:diff', spaceId, filePath, staged),
+  gitLog: (spaceId, limit) => ipcRenderer.invoke('git:log', spaceId, limit),
 }
 
 contextBridge.exposeInMainWorld('halo', api)

@@ -25,6 +25,7 @@ import type {
 import {
   getHeadlessElectronPath,
   getWorkingDir,
+  getSpaceDir,
   getApiCredentials,
   getEnabledMcpServers
 } from './helpers'
@@ -505,6 +506,7 @@ export async function ensureSessionWarm(
 ): Promise<void> {
   const config = getConfig()
   const workDir = getWorkingDir(spaceId)
+  const spaceDir = getSpaceDir(spaceId)
   const conversation = getConversation(spaceId, conversationId)
   const sessionId = conversation?.sessionId
   const electronPath = getHeadlessElectronPath()
@@ -534,7 +536,8 @@ export async function ensureSessionWarm(
       console.error(`[Agent][${conversationId}] CLI stderr (warm):`, data)
     },
     mcpServers: enabledMcpServers,
-    maxTurns: config.agent?.maxTurns
+    maxTurns: config.agent?.maxTurns,
+    spaceDir
   })
 
   try {

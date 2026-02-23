@@ -48,6 +48,8 @@ export interface SystemPromptContext {
   today?: string
   /** Whether the current directory is a git repo */
   isGitRepo?: boolean
+  /** Memory content to append to the system prompt */
+  memoryContent?: string
   /** List of allowed tools (defaults to DEFAULT_ALLOWED_TOOLS) */
   allowedTools?: readonly string[]
 }
@@ -208,9 +210,9 @@ When the Task tool is available, you MUST actively decompose work into parallel 
 - Round 1: spawn explorers in parallel → collect findings
 - Round 2: spawn implementers with findings embedded in their prompts
 
-**Effort-aware model selection:** Subagents with `model: inherit` automatically use a model matched to the current effort level (low/medium → haiku, high → main model, max → opus). Set explicit models only when a subagent needs different capability than the effort level implies.
+**Effort-aware model selection:** Subagents with \`model: inherit\` automatically use a model matched to the current effort level (low/medium → haiku, high → main model, max → opus). Set explicit models only when a subagent needs different capability than the effort level implies.
 
-**Auto mode (no predefined agents):** Claude spawns general-purpose subagents dynamically. Each subagent inherits all tools. Use descriptive `description` and `prompt` fields so the user can see what each agent is doing in the UI.
+**Auto mode (no predefined agents):** Claude spawns general-purpose subagents dynamically. Each subagent inherits all tools. Use descriptive \`description\` and \`prompt\` fields so the user can see what each agent is doing in the UI.
 <example>
 user: Where are errors from the client handled?
 assistant: [Uses the Task tool with subagent_type=Explore to find the files that handle client errors instead of using Glob or Grep directly]
@@ -270,7 +272,7 @@ export function buildSystemPrompt(ctx: SystemPromptContext): string {
   const isGitRepo = ctx.isGitRepo !== undefined ? (ctx.isGitRepo ? 'Yes' : 'No') : 'No'
   const modelInfo = ctx.modelInfo ? `You are powered by ${ctx.modelInfo}.` : ''
 
-  return SYSTEM_PROMPT_TEMPLATE
+  const result = SYSTEM_PROMPT_TEMPLATE
     .replace('{{ALLOWED_TOOLS}}', tools.join(', '))
     .replace('{{WORK_DIR}}', ctx.workDir)
     .replace('{{IS_GIT_REPO}}', isGitRepo)
@@ -278,6 +280,8 @@ export function buildSystemPrompt(ctx: SystemPromptContext): string {
     .replace('{{OS_VERSION}}', osVersion)
     .replace('{{TODAY}}', today)
     .replace('{{MODEL_INFO}}', modelInfo)
+
+  return ctx.memoryContent ? result + `\n\n${ctx.memoryContent}` : result
 }
 
 /**

@@ -458,6 +458,12 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
           ))}
         </div>
 
+        {mode === 'off' && (
+          <p className="text-xs text-muted-foreground px-1">
+            {t('Enable Manual or AI Auto to run parallel agents on your tasks.')}
+          </p>
+        )}
+
         {mode === 'auto' && (
           <div className="space-y-2.5">
             <div className="text-xs text-muted-foreground bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 leading-relaxed">

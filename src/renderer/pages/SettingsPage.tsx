@@ -12,6 +12,7 @@ import { Header } from '../components/layout/Header'
 import { McpServerList } from '../components/settings/McpServerList'
 import { useTranslation } from '../i18n'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useSpaceStore } from '../stores/space.store'
 
 // Import modular settings components
 import {
@@ -21,13 +22,18 @@ import {
   AppearanceSection,
   SystemSection,
   RemoteAccessSection,
-  AboutSection
+  AboutSection,
+  MemorySection,
+  HooksSection,
+  SkillsSection
 } from '../components/settings'
 
 export function SettingsPage() {
   const { t } = useTranslation()
   const { config, setConfig, goBack } = useAppStore()
   const isMobile = useIsMobile()
+  const currentSpace = useSpaceStore(state => state.currentSpace)
+  const currentSpaceDir = currentSpace?.path
   const isRemoteMode = api.isRemoteMode()
 
   // Active navigation section (click-only, no scroll spy - standard settings page behavior)
@@ -123,6 +129,15 @@ export function SettingsPage() {
                   </p>
                 </div>
               </section>
+
+              {/* Memory Section */}
+              <MemorySection spaceDir={currentSpaceDir} />
+
+              {/* Hooks Section */}
+              <HooksSection />
+
+              {/* Skills Section */}
+              <SkillsSection />
 
               {/* Appearance Section */}
               <AppearanceSection config={config} setConfig={setConfig} />

@@ -20,6 +20,7 @@ import { UpdateNotification } from './components/updater/UpdateNotification'
 import { api } from './api'
 import type { AgentEventBase, Thought, ToolCall, HaloConfig, AgentErrorType, Question } from './types'
 import { hasAnyAISource } from './types'
+import { useWorkspaceStore } from './stores/agent-workspace.store'
 
 // Lazy load heavy page components for better initial load performance
 // These pages contain complex components (chat, markdown, code highlighting, etc.)
@@ -72,6 +73,7 @@ function applyTheme(theme: 'light' | 'dark' | 'system') {
 
 export default function App() {
   const { view, config, initialize, setMcpStatus, setView, setConfig } = useAppStore()
+  const workspace = useWorkspaceStore()
   const {
     handleAgentMessage,
     handleAgentToolCall,
@@ -213,12 +215,16 @@ export default function App() {
 
     const unsubToolCall = api.onAgentToolCall((data) => {
       console.log('[App] Received agent:tool-call event:', data)
-      handleAgentToolCall(data as AgentEventBase & ToolCall)
+      const d = data as AgentEventBase & ToolCall
+      handleAgentToolCall(d)
+      workspace.onToolCall(d.id || String(Date.now()), d.name, (d.input || {}) as Record<string, unknown>)
     })
 
     const unsubToolResult = api.onAgentToolResult((data) => {
       console.log('[App] Received agent:tool-result event:', data)
-      handleAgentToolResult(data as AgentEventBase & { toolId: string; result: string; isError: boolean })
+      const d = data as AgentEventBase & { toolId: string; result: string; isError: boolean }
+      handleAgentToolResult(d)
+      workspace.onToolResult(d.toolId, d.isError)
     })
 
     const unsubError = api.onAgentError((data) => {
@@ -229,6 +235,7 @@ export default function App() {
     const unsubComplete = api.onAgentComplete((data) => {
       console.log('[App] Received agent:complete event:', data)
       handleAgentComplete(data as AgentEventBase)
+      workspace.onComplete()
     })
 
     const unsubCompact = api.onAgentCompact((data) => {
