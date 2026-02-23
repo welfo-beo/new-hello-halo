@@ -1272,6 +1272,41 @@ export const api = {
     if (isElectron()) return window.halo.gitLog(spaceId, limit)
     return httpRequest('GET', `/api/git/log?spaceId=${spaceId}&limit=${limit}`)
   },
+
+  gitStage: async (spaceId: string, filePath: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitStage(spaceId, filePath)
+    return httpRequest('POST', '/api/git/stage', { spaceId, filePath })
+  },
+
+  gitUnstage: async (spaceId: string, filePath: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitUnstage(spaceId, filePath)
+    return httpRequest('POST', '/api/git/unstage', { spaceId, filePath })
+  },
+
+  gitCommit: async (spaceId: string, message: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitCommit(spaceId, message)
+    return httpRequest('POST', '/api/git/commit', { spaceId, message })
+  },
+
+  gitBranches: async (spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitBranches(spaceId)
+    return httpRequest('GET', `/api/git/branches?spaceId=${spaceId}`)
+  },
+
+  gitCheckout: async (spaceId: string, branch: string, create = false): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitCheckout(spaceId, branch, create)
+    return httpRequest('POST', '/api/git/checkout', { spaceId, branch, create })
+  },
+
+  gitStagedDiff: async (spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitStagedDiff(spaceId)
+    return httpRequest('GET', `/api/git/staged-diff?spaceId=${spaceId}`)
+  },
+
+  gitCurrentBranch: async (spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitCurrentBranch(spaceId)
+    return httpRequest('GET', `/api/git/current-branch?spaceId=${spaceId}`)
+  },
 }
 
 // Export type for the API

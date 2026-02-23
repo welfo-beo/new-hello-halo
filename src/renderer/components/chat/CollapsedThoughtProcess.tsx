@@ -39,11 +39,12 @@ function ThoughtItem({ thought }: { thought: Thought }) {
   const [showRawJson, setShowRawJson] = useState(false)
   const [showResult, setShowResult] = useState(true)  // Default show result
   const [isContentExpanded, setIsContentExpanded] = useState(false)  // For thinking content expand
-  const color = getThoughtColor(thought.type, thought.isError)
+  const color = getThoughtColor(thought.type, thought.isError, thought.toolName)
   const Icon = getThoughtIcon(thought.type, thought.toolName)
 
   // Check if tool has result (merged tool_result)
   const hasToolResult = thought.type === 'tool_use' && thought.toolResult
+  const isTask = thought.type === 'tool_use' && thought.toolName === 'Task'
 
   // Use friendly format for tool_use, raw content for others
   const content = thought.type === 'tool_use'
@@ -56,16 +57,16 @@ function ThoughtItem({ thought }: { thought: Thought }) {
   const needsTruncate = content.length > maxLen
 
   return (
-    <div className="py-1.5 text-xs border-b border-border/20 last:border-b-0">
+    <div className={`py-1.5 text-xs border-b border-border/20 last:border-b-0 ${isTask ? 'rounded-md border-violet-500/20 bg-violet-500/5 px-2 my-1' : ''}`}>
       {/* First row: Icon + Tool name + Timestamp */}
       <div className="flex items-center gap-2">
         <Icon size={14} className={`${color} shrink-0`} />
         <span className={`font-medium ${color} flex-1 min-w-0 truncate`}>
           {(() => {
-            const label = getThoughtLabelKey(thought.type)
+            const label = getThoughtLabelKey(thought.type, thought.toolName)
             return label === 'AI' ? label : t(label)
           })()}
-          {thought.toolName && ` - ${thought.toolName}`}
+          {thought.toolName && !isTask && ` - ${thought.toolName}`}
         </span>
         <span className="text-muted-foreground/40 text-[10px] shrink-0">
           {new Intl.DateTimeFormat(getCurrentLanguage(), {

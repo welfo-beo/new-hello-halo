@@ -56,6 +56,7 @@ import {
 import { onAgentError, runPpidScanAndCleanup } from '../health'
 import { resolveCredentialsForSdk, buildBaseSdkOptions } from './sdk-config'
 import { executeHooks } from '../hooks.service'
+import { listSkills } from '../skills.service'
 
 // Unified fallback error suffix - guides user to check logs
 const FALLBACK_ERROR_HINT = 'Check logs in Settings > System > Logs.'
@@ -73,7 +74,8 @@ function createSubagentsSignature(subagents: AgentRequest['subagents'], autoGene
       description: agent.description,
       prompt: agent.prompt,
       tools: agent.tools ? [...agent.tools].sort() : [],
-      model: agent.model || 'inherit'
+      model: agent.model || 'inherit',
+      skills: agent.skills ? [...agent.skills].sort() : []
     })).sort((a, b) => a.name.localeCompare(b.name))
     parts.push(JSON.stringify(normalized))
   }
@@ -216,14 +218,28 @@ export async function sendMessage(
 
     // Subagent definitions
     if (subagents && subagents.length > 0) {
+      // Resolve skills: load all available skills once, then match by name
+      const allSkills = listSkills(spaceDir)
+      const skillsByName = new Map(allSkills.map(s => [s.name, s.content]))
+
       sdkOptions.agents = subagents.reduce((acc, agent) => {
         // Resolve model: explicit > effort-derived fallback > inherit
         const resolvedModel = (agent.model && agent.model !== 'inherit')
           ? agent.model
           : effortFallbackModel
+        // Append skill content to prompt if skills are assigned
+        let prompt = agent.prompt
+        if (agent.skills && agent.skills.length > 0) {
+          const skillContents = agent.skills
+            .map(name => skillsByName.get(name))
+            .filter(Boolean)
+          if (skillContents.length > 0) {
+            prompt += '\n\n# Skills\n\n' + skillContents.join('\n\n---\n\n')
+          }
+        }
         acc[agent.name] = {
           description: agent.description,
-          prompt: agent.prompt,
+          prompt,
           ...(agent.tools && { tools: agent.tools }),
           ...(resolvedModel && { model: resolvedModel })
         }

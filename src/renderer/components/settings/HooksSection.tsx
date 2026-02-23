@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../../api'
 import type { HooksConfig, HookEntry } from '../../types'
 
-const EVENTS = ['PreToolUse', 'PostToolUse', 'Stop'] as const
+const EVENTS = ['PreToolUse', 'PostToolUse', 'Stop', 'Notification', 'SubagentStop'] as const
 type HookEvent = typeof EVENTS[number]
 
 export function HooksSection() {

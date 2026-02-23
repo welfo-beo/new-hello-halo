@@ -28,6 +28,7 @@ import {
   Loader2,
   Lightbulb,
   Zap,
+  Bot,
   Info,
   ChevronDown,
   ChevronRight,
@@ -83,7 +84,7 @@ export const toolIconMap: Record<string, LucideIcon> = {
   TodoWrite: ListTodo,
 
   // Agent
-  Task: Zap,
+  Task: Bot,
 
   // Notebook
   NotebookEdit: FileCode,

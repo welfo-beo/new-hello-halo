@@ -10,6 +10,8 @@ export interface SubagentDef {
   prompt: string
   tools?: string[]
   model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+  skills?: string[]
+  enabled?: boolean  // undefined = enabled (default)
 }
 
 type SpaceConfig = { mode: SubagentsMode; subagents: SubagentDef[] }
@@ -21,6 +23,8 @@ interface SubagentsState {
   addSubagent: (spaceId: string, agent: Omit<SubagentDef, 'id'>) => void
   updateSubagent: (spaceId: string, id: string, agent: Omit<SubagentDef, 'id'>) => void
   removeSubagent: (spaceId: string, id: string) => void
+  toggleSubagent: (spaceId: string, id: string) => void
+  duplicateSubagent: (spaceId: string, id: string) => void
   reorderSubagents: (spaceId: string, fromIndex: number, toIndex: number) => void
   copySubagentsToSpace: (fromSpaceId: string, toSpaceId: string, agentIds: string[]) => void
   clearSpace: (spaceId: string) => void
@@ -57,6 +61,30 @@ export const useSubagentsStore = create<SubagentsState>()(
           return { spaces: { ...s.spaces, [spaceId]: { ...cfg, subagents: cfg.subagents.filter(a => a.id !== id) } } }
         })
       },
+      toggleSubagent: (spaceId, id) => {
+        if (!spaceId) return
+        set((s) => {
+          const cfg = s.spaces[spaceId] ?? DEFAULT_CONFIG
+          return { spaces: { ...s.spaces, [spaceId]: { ...cfg, subagents: cfg.subagents.map(a => a.id === id ? { ...a, enabled: a.enabled === false ? undefined : false } : a) } } }
+        })
+      },
+      duplicateSubagent: (spaceId, id) => {
+        if (!spaceId) return
+        set((s) => {
+          const cfg = s.spaces[spaceId] ?? DEFAULT_CONFIG
+          const src = cfg.subagents.find(a => a.id === id)
+          if (!src) return s
+          const existingNames = new Set(cfg.subagents.map(a => a.name))
+          let newName = `${src.name}-copy`
+          let i = 2
+          while (existingNames.has(newName)) newName = `${src.name}-copy-${i++}`
+          const dup = { ...src, id: crypto.randomUUID(), name: newName, enabled: undefined }
+          const idx = cfg.subagents.findIndex(a => a.id === id)
+          const arr = [...cfg.subagents]
+          arr.splice(idx + 1, 0, dup)
+          return { spaces: { ...s.spaces, [spaceId]: { ...cfg, subagents: arr } } }
+        })
+      },
       reorderSubagents: (spaceId, fromIndex, toIndex) => {
         if (!spaceId) return
         set((s) => {
@@ -90,7 +118,6 @@ export const useSubagentsStore = create<SubagentsState>()(
       version: 1,
       migrate: (state: any, version: number) => {
         if (version === 0) {
-          // Assign stable ids to agents that were persisted before id field was added
           const spaces = state.spaces as Record<string, any>
           for (const spaceId of Object.keys(spaces)) {
             spaces[spaceId].subagents = (spaces[spaceId].subagents ?? []).map((a: any) =>

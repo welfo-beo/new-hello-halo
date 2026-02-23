@@ -153,7 +153,7 @@ const ThoughtItem = memo(function ThoughtItem({ thought, isLast }: { thought: Th
   const [showResult, setShowResult] = useState(true)  // Tool result collapsed by default shows summary
   const [isContentExpanded, setIsContentExpanded] = useState(false)  // For thinking content expand
   const { t } = useTranslation()
-  const color = getThoughtColor(thought.type, thought.isError)
+  const color = getThoughtColor(thought.type, thought.isError, thought.toolName)
   const Icon = getThoughtIcon(thought.type, thought.toolName)
 
   // Determine content and display mode based on thought type and streaming state
@@ -206,6 +206,7 @@ const ThoughtItem = memo(function ThoughtItem({ thought, isLast }: { thought: Th
     return { label: t('Running'), color: 'text-blue-400', icon: 'running' }
   }
   const toolStatus = getToolStatus()
+  const isTask = thought.type === 'tool_use' && thought.toolName === 'Task'
 
 
   return (
@@ -213,7 +214,9 @@ const ThoughtItem = memo(function ThoughtItem({ thought, isLast }: { thought: Th
       {/* Timeline line */}
       <div className="flex flex-col items-center">
         <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
-          thought.isError || thought.toolResult?.isError ? 'bg-amber-500/20' : isStreaming ? 'bg-primary/20' : 'bg-primary/10'
+          thought.isError || thought.toolResult?.isError ? 'bg-amber-500/20'
+            : isTask ? 'bg-violet-500/20'
+            : isStreaming ? 'bg-primary/20' : 'bg-primary/10'
         } ${thought.toolResult?.isError ? 'text-amber-500' : color}`}>
           {hasToolResult ? (
             thought.toolResult!.isError ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />
@@ -227,15 +230,15 @@ const ThoughtItem = memo(function ThoughtItem({ thought, isLast }: { thought: Th
       </div>
 
       {/* Content */}
-      <div className="flex-1 pb-4 min-w-0">
+      <div className={`flex-1 pb-4 min-w-0 ${isTask ? 'rounded-lg border border-violet-500/20 bg-violet-500/5 px-2.5 py-2' : ''}`}>
         {/* Header */}
         <div className="flex items-center gap-2 mb-1">
           <span className={`text-xs font-medium ${thought.toolResult?.isError ? 'text-amber-500' : color}`}>
             {(() => {
-              const label = getThoughtLabelKey(thought.type)
+              const label = getThoughtLabelKey(thought.type, thought.toolName)
               return label === 'AI' ? label : t(label)
             })()}
-            {thought.toolName && ` - ${thought.toolName}`}
+            {thought.toolName && !isTask && ` - ${thought.toolName}`}
           </span>
           {toolStatus && (
             <span className={`text-xs ${toolStatus.color}`}>

@@ -94,6 +94,7 @@ export interface SubagentDefinition {
   prompt: string
   tools?: string[]
   model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+  skills?: string[]
 }
 
 // ============================================

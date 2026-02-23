@@ -522,7 +522,7 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
             attachMenuRef={attachMenuRef}
             subagentsActive={subagentsActive}
             subagentsMode={mode}
-            subagentsCount={subagents.length}
+            subagentsCount={subagents.filter(a => a.enabled !== false).length}
             showSubagentsPanel={showSubagentsPanel}
             onSubagentsPanelToggle={() => setShowSubagentsPanel(!showSubagentsPanel)}
             subagentsPanelRef={subagentsPanelRef}

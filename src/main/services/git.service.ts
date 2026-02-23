@@ -2,7 +2,7 @@
  * Git Service - Workspace git operations
  */
 
-import { execSync } from 'child_process'
+import { execFileSync, execSync } from 'child_process'
 import { existsSync } from 'fs'
 import { join } from 'path'
 
@@ -70,4 +70,62 @@ export function getGitLog(workDir: string, limit = 10): GitCommit[] {
       date: parts[3] || ''
     }
   })
+}
+
+export function gitStage(workDir: string, filePath: string): boolean {
+  if (!isGitRepo(workDir)) return false
+  return exec(`git add -- "${filePath}"`, workDir) !== null
+}
+
+export function gitUnstage(workDir: string, filePath: string): boolean {
+  if (!isGitRepo(workDir)) return false
+  exec(`git restore --staged -- "${filePath}"`, workDir)
+  return true
+}
+
+export function gitCommit(workDir: string, message: string): { success: boolean; error?: string } {
+  if (!isGitRepo(workDir)) return { success: false, error: 'Not a git repo' }
+  try {
+    execFileSync('git', ['commit', '-m', message], { cwd: workDir, encoding: 'utf-8', timeout: 15000 })
+    return { success: true }
+  } catch (e: any) {
+    return { success: false, error: e.stderr || e.message }
+  }
+}
+
+export interface GitBranch {
+  name: string
+  current: boolean
+  remote: boolean
+}
+
+export function getGitBranches(workDir: string): GitBranch[] {
+  if (!isGitRepo(workDir)) return []
+  const output = exec('git branch -a', workDir)
+  if (!output) return []
+  return output.split('\n').filter(Boolean).map(line => {
+    const current = line.startsWith('*')
+    const name = line.replace(/^\*?\s+/, '').replace(/^remotes\//, '')
+    return { name, current, remote: line.includes('remotes/') }
+  })
+}
+
+export function gitCheckout(workDir: string, branch: string, create = false): { success: boolean; error?: string } {
+  if (!isGitRepo(workDir)) return { success: false, error: 'Not a git repo' }
+  try {
+    const args = create ? ['checkout', '-b', branch] : ['checkout', branch]
+    execFileSync('git', args, { cwd: workDir, encoding: 'utf-8', timeout: 15000 })
+    return { success: true }
+  } catch (e: any) {
+    return { success: false, error: e.stderr || e.message }
+  }
+}
+
+export function getStagedDiff(workDir: string): string {
+  return getGitDiff(workDir, undefined, true)
+}
+
+export function getCurrentBranch(workDir: string): string {
+  if (!isGitRepo(workDir)) return ''
+  return exec('git branch --show-current', workDir)
 }

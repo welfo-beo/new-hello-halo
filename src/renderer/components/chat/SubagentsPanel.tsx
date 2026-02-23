@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Trash2, Edit2, X, Check, Bot, Sparkles, ChevronDown, AlertCircle, GripVertical, Copy, Download, Upload, LayoutTemplate, GitBranch, Zap } from 'lucide-react'
+import { Plus, Trash2, Edit2, X, Check, Bot, Sparkles, ChevronDown, AlertCircle, GripVertical, Copy, Download, Upload, LayoutTemplate, GitBranch, Zap, CopyPlus, Power } from 'lucide-react'
 import { useSubagentsStore, type SubagentDef, type SubagentsMode } from '../../stores/subagents.store'
 import { useSpaceStore } from '../../stores/space.store'
 import { useTranslation } from '../../i18n'
+import { api } from '../../api'
 
 type AgentForm = Omit<SubagentDef, 'id'>
 
@@ -43,6 +44,27 @@ const AGENT_TEMPLATES: AgentForm[] = [
     tools: ['Read', 'Edit', 'Write', 'Grep', 'Glob'],
     model: 'sonnet',
   },
+  {
+    name: 'data-analyst',
+    description: 'Data analysis specialist. Use for analyzing datasets, generating insights, and creating reports.',
+    prompt: 'You are a data analysis expert. Analyze data files, identify patterns and anomalies, compute statistics, and present findings clearly.',
+    tools: ['Read', 'Bash', 'Write'],
+    model: 'sonnet',
+  },
+  {
+    name: 'debugger',
+    description: 'Bug investigation specialist. Use for tracing errors, analyzing stack traces, and finding root causes.',
+    prompt: 'You are a debugging expert. Trace errors to their root cause, analyze logs and stack traces, reproduce issues, and propose targeted fixes.',
+    tools: ['Read', 'Grep', 'Glob', 'Bash'],
+    model: 'inherit',
+  },
+  {
+    name: 'api-designer',
+    description: 'API design specialist. Use for designing REST/GraphQL APIs, writing OpenAPI specs, and reviewing contracts.',
+    prompt: 'You are an API design expert. Design clean, consistent REST or GraphQL APIs, write OpenAPI/Swagger specs, and ensure backward compatibility.',
+    tools: ['Read', 'Write', 'Glob'],
+    model: 'sonnet',
+  },
 ]
 
 const TOOL_OPTIONS = ['Read', 'Edit', 'Write', 'Bash', 'Grep', 'Glob', 'Task']
@@ -52,7 +74,7 @@ const MODEL_OPTIONS: Array<{ value: NonNullable<SubagentDef['model']>; label: st
   { value: 'sonnet', label: 'Sonnet' },
   { value: 'opus', label: 'Opus' },
 ]
-const EMPTY_FORM: AgentForm = { name: '', description: '', prompt: '', tools: undefined, model: 'inherit' }
+const EMPTY_FORM: AgentForm = { name: '', description: '', prompt: '', tools: undefined, model: 'inherit', skills: undefined }
 
 interface SubagentFormProps {
   initial: AgentForm
@@ -110,16 +132,80 @@ function ToolPickerPortal({ anchorRef, tools, onToggle, onClose }: {
   )
 }
 
+function SkillPickerPortal({ anchorRef, skills, available, onToggle, onClose }: {
+  anchorRef: React.RefObject<HTMLButtonElement | null>
+  skills: string[]
+  available: string[]
+  onToggle: (skill: string) => void
+  onClose: () => void
+}) {
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
+
+  useEffect(() => {
+    const el = anchorRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setPos({ top: r.bottom + 4, left: r.left, width: r.width })
+  }, [anchorRef])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const el = document.getElementById('skill-picker-portal')
+      if (el && !el.contains(e.target as Node) && !anchorRef.current?.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [anchorRef, onClose])
+
+  return createPortal(
+    <div
+      id="skill-picker-portal"
+      style={{ position: 'fixed', top: pos.top, left: pos.left, minWidth: pos.width }}
+      className="p-2 bg-popover border border-border rounded-xl shadow-lg z-[9999] flex flex-wrap gap-1 min-w-[200px]"
+    >
+      {available.map(skill => (
+        <button
+          key={skill}
+          onClick={() => onToggle(skill)}
+          className={`px-2 py-1 text-xs rounded-md transition-colors ${
+            skills.includes(skill) ? 'bg-violet-500/15 text-violet-500' : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+          }`}
+        >
+          /{skill}
+        </button>
+      ))}
+    </div>,
+    document.body
+  )
+}
+
 function SubagentForm({ initial, existingNames, editingName, onSave, onCancel }: SubagentFormProps) {
   const { t } = useTranslation()
   const [form, setForm] = useState<AgentForm>(initial)
   const [showToolPicker, setShowToolPicker] = useState(false)
+  const [showSkillPicker, setShowSkillPicker] = useState(false)
+  const [availableSkills, setAvailableSkills] = useState<string[]>([])
   const btnRef = useRef<HTMLButtonElement>(null)
+  const skillBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    api.skillsList().then((r: any) => {
+      if (r.success) setAvailableSkills((r.data as any[]).map(s => s.name))
+    }).catch(() => {})
+  }, [])
 
   const toggleTool = (tool: string) => {
     const current = form.tools ?? []
     const next = current.includes(tool) ? current.filter(t => t !== tool) : [...current, tool]
     setForm(f => ({ ...f, tools: next.length > 0 ? next : undefined }))
+  }
+
+  const toggleSkill = (skill: string) => {
+    const current = form.skills ?? []
+    const next = current.includes(skill) ? current.filter(s => s !== skill) : [...current, skill]
+    setForm(f => ({ ...f, skills: next.length > 0 ? next : undefined }))
   }
 
   const isDuplicate = form.name.trim() !== editingName && existingNames.includes(form.name.trim())
@@ -185,6 +271,29 @@ function SubagentForm({ initial, existingNames, editingName, onSave, onCancel }:
           ))}
         </select>
       </div>
+      {availableSkills.length > 0 && (
+        <div className="relative">
+          <button
+            ref={skillBtnRef}
+            onClick={() => setShowSkillPicker(v => !v)}
+            className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg flex items-center justify-between hover:bg-muted/50"
+          >
+            <span className="text-muted-foreground truncate">
+              {form.skills?.length ? `Skills: ${form.skills.join(', ')}` : t('Skills: none')}
+            </span>
+            <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
+          </button>
+          {showSkillPicker && (
+            <SkillPickerPortal
+              anchorRef={skillBtnRef}
+              skills={form.skills ?? []}
+              available={availableSkills}
+              onToggle={toggleSkill}
+              onClose={() => setShowSkillPicker(false)}
+            />
+          )}
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <button onClick={onCancel} className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
           {t('Cancel')}
@@ -224,25 +333,30 @@ function AgentAvatar({ name }: { name: string }) {
   )
 }
 
-function AgentCard({ agent, onEdit, onRemove, onCopyTo, onDragStart, onDragOver, onDrop, isDragging }: {
+function AgentCard({ agent, onEdit, onRemove, onToggle, onDuplicate, onCopyTo, onDragStart, onDragEnd, onDragOver, onDrop, isDragging }: {
   agent: SubagentDef
   onEdit: () => void
   onRemove: () => void
+  onToggle: () => void
+  onDuplicate: () => void
   onCopyTo?: () => void
   onDragStart: () => void
+  onDragEnd: () => void
   onDragOver: (e: React.DragEvent) => void
   onDrop: () => void
   isDragging: boolean
 }) {
+  const isDisabled = agent.enabled === false
   const modelColor = agent.model && agent.model !== 'inherit' ? MODEL_COLORS[agent.model] ?? 'bg-muted text-muted-foreground' : null
   return (
     <div
       draggable
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={`p-2.5 bg-muted/20 rounded-xl border transition-colors group ${
-        isDragging ? 'opacity-40 border-primary/40' : 'border-border/40 hover:border-border/70 hover:bg-muted/30'
+        isDragging ? 'opacity-40 border-primary/40' : isDisabled ? 'border-border/20 opacity-50' : 'border-border/40 hover:border-border/70 hover:bg-muted/30'
       }`}
     >
       <div className="flex items-start gap-2.5">
@@ -252,25 +366,37 @@ function AgentCard({ agent, onEdit, onRemove, onCopyTo, onDragStart, onDragOver,
         <AgentAvatar name={agent.name} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-medium truncate">{agent.name}</span>
+            <span className={`text-sm font-medium truncate ${isDisabled ? 'line-through text-muted-foreground' : ''}`}>{agent.name}</span>
             {modelColor && (
               <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-md flex-shrink-0 ${modelColor}`}>
                 {agent.model}
               </span>
             )}
+            {isDisabled && <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded-md">off</span>}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{agent.description}</p>
-          {agent.tools && agent.tools.length > 0 && (
+          {(agent.tools?.length || agent.skills?.length) ? (
             <div className="flex flex-wrap gap-1 mt-1.5">
-              {agent.tools.map(tool => (
+              {agent.tools?.map(tool => (
                 <span key={tool} className="px-1.5 py-0.5 text-[10px] bg-primary/10 text-primary rounded-md font-medium">
                   {tool}
                 </span>
               ))}
+              {agent.skills?.map(skill => (
+                <span key={skill} className="px-1.5 py-0.5 text-[10px] bg-violet-500/10 text-violet-500 rounded-md font-medium">
+                  /{skill}
+                </span>
+              ))}
             </div>
-          )}
+          ) : null}
         </div>
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          <button onClick={onToggle} title={isDisabled ? 'Enable' : 'Disable'} className={`p-1 rounded-md hover:bg-muted ${isDisabled ? 'text-muted-foreground' : 'text-green-500 hover:text-green-600'}`}>
+            <Power size={13} />
+          </button>
+          <button onClick={onDuplicate} title="Duplicate" className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+            <CopyPlus size={13} />
+          </button>
           {onCopyTo && (
             <button onClick={onCopyTo} className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
               <Copy size={13} />
@@ -335,7 +461,7 @@ interface SubagentsPanelProps {
 
 export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
   const { t } = useTranslation()
-  const { setMode, addSubagent, updateSubagent, removeSubagent, reorderSubagents, copySubagentsToSpace } = useSubagentsStore()
+  const { setMode, addSubagent, updateSubagent, removeSubagent, toggleSubagent, duplicateSubagent, reorderSubagents, copySubagentsToSpace } = useSubagentsStore()
   const { mode, subagents } = useSubagentsStore(s => s.spaces[spaceId] ?? { mode: 'off' as SubagentsMode, subagents: [] })
   const allSpaces = useSpaceStore(s => s.spaces)
   const otherSpaces = allSpaces.filter(s => s.id !== spaceId)
@@ -569,7 +695,7 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
                   <div key={agent.id}>
                     {editingId === agent.id ? (
                       <SubagentForm
-                        initial={{ name: agent.name, description: agent.description, prompt: agent.prompt, tools: agent.tools, model: agent.model }}
+                        initial={{ name: agent.name, description: agent.description, prompt: agent.prompt, tools: agent.tools, model: agent.model, skills: agent.skills, enabled: agent.enabled }}
                         existingNames={existingNames}
                         editingName={agent.name}
                         onSave={(a) => { updateSubagent(spaceId, agent.id, a); setEditingId(null) }}
@@ -598,8 +724,11 @@ export function SubagentsPanel({ spaceId, onClose }: SubagentsPanelProps) {
                         agent={agent}
                         onEdit={() => setEditingId(agent.id)}
                         onRemove={() => { removeSubagent(spaceId, agent.id); setEditingId(null) }}
+                        onToggle={() => toggleSubagent(spaceId, agent.id)}
+                        onDuplicate={() => duplicateSubagent(spaceId, agent.id)}
                         onCopyTo={otherSpaces.length > 0 ? () => setShowCopyTo(agent.id) : undefined}
                         onDragStart={() => setDragIndex(index)}
+                        onDragEnd={() => setDragIndex(null)}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={() => handleDrop(index)}
                         isDragging={dragIndex === index}

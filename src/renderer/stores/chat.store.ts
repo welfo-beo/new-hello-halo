@@ -786,7 +786,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         thinkingMode: thinkingMode as any,
         effort: effort as any,
         subagents: subagentsMode === 'manual' && subagents.length > 0
-          ? subagents.map(({ id: _id, ...rest }) => rest)
+          ? subagents.filter(a => a.enabled !== false).map(({ id: _id, enabled: _en, ...rest }) => rest)
           : undefined,
         autoGenerateSubagents: subagentsMode === 'auto' || undefined,
         canvasContext: buildCanvasContext()
