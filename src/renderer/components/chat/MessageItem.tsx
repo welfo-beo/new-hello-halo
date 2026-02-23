@@ -21,6 +21,7 @@ import {
   Copy,
   Check,
   Loader2,
+  Bot,
 } from 'lucide-react'
 import { getToolIcon } from '../icons/ToolIcons'
 import { BrowserTaskCard, isBrowserTool } from '../tool/BrowserTaskCard'
@@ -155,12 +156,16 @@ function ThoughtItem({ thought }: { thought: Thought }) {
     switch (thought.type) {
       case 'thinking':
         return { label: t('Thinking'), color: 'text-blue-400', Icon: Lightbulb }
-      case 'tool_use':
+      case 'tool_use': {
+        const isTask = thought.toolName === 'Task'
+        const taskDesc = isTask && typeof thought.toolInput?.description === 'string'
+          ? thought.toolInput.description : undefined
         return {
-          label: `${t('Calling')} ${thought.toolName}`,
-          color: 'text-amber-400',
-          Icon: thought.toolName ? getToolIcon(thought.toolName) : Wrench
+          label: taskDesc ? `${t('Subagent')}: ${taskDesc}` : `${t('Calling')} ${thought.toolName}`,
+          color: isTask ? 'text-violet-400' : 'text-amber-400',
+          Icon: isTask ? Bot : (thought.toolName ? getToolIcon(thought.toolName) : Wrench)
         }
+      }
       case 'tool_result':
         return {
           label: t('Tool result'),
@@ -220,7 +225,9 @@ function ThoughtItem({ thought }: { thought: Thought }) {
               <div className={`mt-1 p-1.5 rounded text-[10px] overflow-x-auto ${
                 thought.toolResult!.isError
                   ? 'bg-destructive/10 text-destructive'
-                  : 'bg-muted/30 text-muted-foreground'
+                  : thought.toolName === 'Task'
+                    ? 'bg-violet-500/10 text-violet-300'
+                    : 'bg-muted/30 text-muted-foreground'
               }`}>
                 <pre className="whitespace-pre-wrap break-words">
                   {formatResultOutput(thought.toolResult!.output, isExpanded ? 10000 : 300)}

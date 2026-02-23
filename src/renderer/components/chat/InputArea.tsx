@@ -20,11 +20,14 @@
  */
 
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent, DragEvent } from 'react'
-import { Plus, ImagePlus, Loader2, AlertCircle, Atom, Globe, Gauge } from 'lucide-react'
+import { Plus, ImagePlus, Loader2, AlertCircle, Atom, Globe, Gauge, Bot } from 'lucide-react'
 import { useOnboardingStore } from '../../stores/onboarding.store'
 import { useAIBrowserStore } from '../../stores/ai-browser.store'
+import { useSubagentsStore, type SubagentsMode } from '../../stores/subagents.store'
+import { useSpaceStore } from '../../stores/space.store'
 import { getOnboardingPrompt } from '../onboarding/onboardingData'
 import { ImageAttachmentPreview } from './ImageAttachmentPreview'
+import { SubagentsPanel } from './SubagentsPanel'
 import { processImage, isValidImageType, formatFileSize } from '../../utils/imageProcessor'
 import type { ImageAttachment } from '../../types'
 import { useTranslation } from '../../i18n'
@@ -62,13 +65,20 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
   const [effort, setEffort] = useState<EffortLevel>('high')
   const [showEffortMenu, setShowEffortMenu] = useState(false)
   const [showAttachMenu, setShowAttachMenu] = useState(false)  // Attachment menu visibility
+  const [showSubagentsPanel, setShowSubagentsPanel] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const attachMenuRef = useRef<HTMLDivElement>(null)
   const effortMenuRef = useRef<HTMLDivElement>(null)
+  const subagentsPanelRef = useRef<HTMLDivElement>(null)
 
   // AI Browser state
   const { enabled: aiBrowserEnabled, setEnabled: setAIBrowserEnabled } = useAIBrowserStore()
+
+  // Subagents state (per-space)
+  const spaceId = useSpaceStore(s => s.currentSpace?.id ?? '')
+  const { mode, subagents } = useSubagentsStore(s => s.spaces[spaceId] ?? { mode: 'off' as SubagentsMode, subagents: [] })
+  const subagentsActive = mode !== 'off'
 
   // Auto-clear error after 3 seconds
   useEffect(() => {
@@ -87,13 +97,16 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
       if (effortMenuRef.current && !effortMenuRef.current.contains(event.target as Node)) {
         setShowEffortMenu(false)
       }
+      if (subagentsPanelRef.current && !subagentsPanelRef.current.contains(event.target as Node)) {
+        setShowSubagentsPanel(false)
+      }
     }
 
-    if (showAttachMenu || showEffortMenu) {
+    if (showAttachMenu || showEffortMenu || showSubagentsPanel) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showAttachMenu, showEffortMenu])
+  }, [showAttachMenu, showEffortMenu, showSubagentsPanel])
 
   // Show error to user
   const showError = (message: string) => {
@@ -411,6 +424,13 @@ export function InputArea({ onSend, onStop, isGenerating, placeholder, isCompact
             imageCount={images.length}
             maxImages={MAX_IMAGES}
             attachMenuRef={attachMenuRef}
+            subagentsActive={subagentsActive}
+            subagentsMode={mode}
+            subagentsCount={subagents.length}
+            showSubagentsPanel={showSubagentsPanel}
+            onSubagentsPanelToggle={() => setShowSubagentsPanel(!showSubagentsPanel)}
+            subagentsPanelRef={subagentsPanelRef}
+            spaceId={spaceId}
             canSend={canSend}
             onSend={handleSend}
             onStop={onStop}
@@ -446,6 +466,13 @@ interface InputToolbarProps {
   imageCount: number
   maxImages: number
   attachMenuRef: React.RefObject<HTMLDivElement | null>
+  subagentsActive: boolean
+  subagentsMode: SubagentsMode
+  subagentsCount: number
+  showSubagentsPanel: boolean
+  onSubagentsPanelToggle: () => void
+  subagentsPanelRef: React.RefObject<HTMLDivElement | null>
+  spaceId: string
   canSend: boolean
   onSend: () => void
   onStop: () => void
@@ -470,6 +497,13 @@ function InputToolbar({
   imageCount,
   maxImages,
   attachMenuRef,
+  subagentsActive,
+  subagentsMode,
+  subagentsCount,
+  showSubagentsPanel,
+  onSubagentsPanelToggle,
+  subagentsPanelRef,
+  spaceId,
   canSend,
   onSend,
   onStop
@@ -610,6 +644,37 @@ function InputToolbar({
                   </button>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Subagents button */}
+        {!isGenerating && !isOnboarding && (
+          <div className="relative" ref={subagentsPanelRef}>
+            <button
+              onClick={onSubagentsPanelToggle}
+              className={`h-8 flex items-center gap-1.5 px-2.5 rounded-lg transition-colors duration-200 relative
+                ${subagentsActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/50'
+                }
+              `}
+              title={`${t('Subagents')} (${subagentsMode})`}
+            >
+              <Bot size={15} />
+              <span className="text-xs">{t('Agents')}</span>
+              {subagentsMode === 'manual' && subagentsCount > 0 && (
+                <span className="text-[10px] opacity-70">{subagentsCount}</span>
+              )}
+              {subagentsMode === 'auto' && subagentsActive && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full" />
+              )}
+              {subagentsMode === 'manual' && subagentsCount === 0 && subagentsActive && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-400 rounded-full" title={t('No agents defined')} />
+              )}
+            </button>
+            {showSubagentsPanel && (
+              <SubagentsPanel spaceId={spaceId} onClose={() => setShowSubagentsPanel(false)} />
             )}
           </div>
         )}

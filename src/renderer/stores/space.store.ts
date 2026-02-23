@@ -3,6 +3,7 @@
  */
 
 import { create } from 'zustand'
+import { useSubagentsStore } from './subagents.store'
 import { api } from '../api'
 import type { Space, CreateSpaceInput, SpacePreferences } from '../types'
 
@@ -157,6 +158,7 @@ export const useSpaceStore = create<SpaceState>((set, get) => ({
           set({ currentSpace: null })
         }
 
+        useSubagentsStore.getState().clearSpace(spaceId)
         return true
       }
 
