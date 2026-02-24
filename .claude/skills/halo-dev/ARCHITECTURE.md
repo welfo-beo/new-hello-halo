@@ -629,6 +629,29 @@ In development, the HTTP server proxies to Vite dev server:
 - WebSocket HMR -> Vite
 - API routes -> Express handlers
 
+### OMC Session-First Orchestration
+
+Dev Mode now integrates OMC through a session-first pipeline instead of relying only on handcrafted workflow prompts.
+
+- **Entry point**: `renderer/pages/DevModePage.tsx`
+  - Builds user task input from OMC mode templates (`autopilot`, `ralph`, `custom`)
+  - Sends `subagents` + `orchestration` metadata to `api.sendMessage`
+- **Transport chain**:
+  - `renderer/api/index.ts` -> `preload/index.ts` -> `ipc/agent.ts` (Electron)
+  - `renderer/api/index.ts` -> `http/routes/index.ts` (Remote)
+  - Both paths converge in `controllers/agent.controller.ts`
+- **Execution core**: `main/services/agent/send-message.ts`
+  - Detects `orchestration.provider === 'omc' && mode === 'session'`
+  - Creates OMC session via `main/services/omc.service.ts`
+  - Applies `processPrompt()` to the user message
+  - Merges OMC `queryOptions` into SDK options with deterministic precedence
+- **Session lifecycle**: `main/services/agent/session-manager.ts`
+  - `SessionConfig` now includes `orchestrationSignature`
+  - Mode/agent-set changes can trigger V2 session rebuild
+- **Compatibility layer**: `main/services/omc.service.ts`
+  - Runtime export adapter prefers `createSisyphusSession`, falls back to `createOmcSession`
+  - Provides category mapping coverage checks for loaded OMC agent definitions
+
 ### Web Mode Limitations
 
 Some features are disabled in web mode:

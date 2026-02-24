@@ -76,8 +76,8 @@ export function RemoteAccessSection() {
         if (response.success && response.data) {
           setRemoteStatus(response.data as RemoteAccessStatus)
         }
-      } catch {
-        // Enable failed silently
+      } catch (err) {
+        console.error('[RemoteAccess] Failed to enable:', err)
       } finally {
         setIsEnablingRemote(false)
       }

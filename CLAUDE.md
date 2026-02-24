@@ -69,6 +69,7 @@ Electron 33 + React 18 + TypeScript 5.3 + Vite + Tailwind CSS 3.4 + Zustand + Cl
 | Documentation | `documentation-engineer` |
 | CLI tooling / scripts | `cli-developer` |
 | Complex multi-agent coordination | `multi-agent-coordinator` |
+| Parallel task decomposition & execution | `/parallel-task` skill → auto-selects agents |
 
 ## Directory → Agent Mapping
 

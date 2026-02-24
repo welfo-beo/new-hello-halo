@@ -9,7 +9,7 @@
  * - Window maximize for fullscreen viewing
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { Copy, Check, ExternalLink, WrapText } from 'lucide-react'
 import { api } from '../../../api'
 import type { CanvasTab } from '../../../stores/canvas.store'
@@ -64,18 +64,18 @@ export function TextViewer({ tab, onScrollChange }: TextViewerProps) {
     }
   }
 
-  // Count lines
-  const lines = content.split('\n')
-  const lineCount = lines.length
+  // Count lines and calculate file size
+  const { lines, lineCount, formattedSize } = useMemo(() => {
+    const lines = content.split('\n')
+    const fileSize = new Blob([content]).size
+    const formattedSize = fileSize < 1024
+      ? `${fileSize} B`
+      : fileSize < 1024 * 1024
+      ? `${(fileSize / 1024).toFixed(1)} KB`
+      : `${(fileSize / (1024 * 1024)).toFixed(1)} MB`
+    return { lines, lineCount: lines.length, formattedSize }
+  }, [content])
   const canOpenExternal = !api.isRemoteMode() && tab.path
-
-  // Calculate file size
-  const fileSize = new Blob([content]).size
-  const formattedSize = fileSize < 1024
-    ? `${fileSize} B`
-    : fileSize < 1024 * 1024
-    ? `${(fileSize / 1024).toFixed(1)} KB`
-    : `${(fileSize / (1024 * 1024)).toFixed(1)} MB`
 
   return (
     <div className="relative flex flex-col h-full bg-background">

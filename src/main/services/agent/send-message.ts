@@ -9,7 +9,7 @@
  * - Error handling and recovery
  */
 
-import { BrowserWindow } from 'electron'
+import type { BrowserWindow } from 'electron'
 import { is } from '@electron-toolkit/utils'
 import { getConfig } from '../config.service'
 import { getConversation, saveSessionId, addMessage, updateLastMessage } from '../conversation.service'
@@ -36,7 +36,6 @@ import {
   sendToRenderer,
   setMainWindow
 } from './helpers'
-import { buildSystemPromptWithAIBrowser } from './system-prompt'
 import {
   getOrCreateV2Session,
   closeV2Session,
@@ -57,6 +56,12 @@ import { onAgentError, runPpidScanAndCleanup } from '../health'
 import { resolveCredentialsForSdk, buildBaseSdkOptions } from './sdk-config'
 import { executeHooks } from '../hooks.service'
 import { listSkills } from '../skills.service'
+import { createOmcSessionForSpace } from '../omc.service'
+import {
+  createOrchestrationSignature,
+  extractOmcSessionOptions,
+  mergeOmcSessionIntoSdkOptions
+} from './omc-orchestration'
 
 // Unified fallback error suffix - guides user to check logs
 const FALLBACK_ERROR_HINT = 'Check logs in Settings > System > Logs.'
@@ -112,6 +117,7 @@ export async function sendMessage(
     effort,
     subagents,
     autoGenerateSubagents,
+    orchestration,
     canvasContext
   } = request
 
@@ -119,7 +125,7 @@ export async function sendMessage(
   const effectiveThinkingMode = thinkingMode || (thinkingEnabled ? 'enabled' : 'disabled')
   const effectiveThinkingBudget = thinkingBudget || 10240
 
-  console.log(`[Agent] sendMessage: conv=${conversationId}${images && images.length > 0 ? `, images=${images.length}` : ''}${aiBrowserEnabled ? ', AI Browser enabled' : ''}${effectiveThinkingMode !== 'disabled' ? `, thinking=${effectiveThinkingMode}` : ''}${effort ? `, effort=${effort}` : ''}${subagents?.length ? `, subagents=${subagents.length}` : ''}${canvasContext?.isOpen ? `, canvas tabs=${canvasContext.tabCount}` : ''}`)
+  console.log(`[Agent] sendMessage: conv=${conversationId}${images && images.length > 0 ? `, images=${images.length}` : ''}${aiBrowserEnabled ? ', AI Browser enabled' : ''}${effectiveThinkingMode !== 'disabled' ? `, thinking=${effectiveThinkingMode}` : ''}${effort ? `, effort=${effort}` : ''}${subagents?.length ? `, subagents=${subagents.length}` : ''}${orchestration ? `, orchestration=${orchestration.provider}:${orchestration.mode}:${orchestration.workflowMode}` : ''}${canvasContext?.isOpen ? `, canvas tabs=${canvasContext.tabCount}` : ''}`)
 
   const config = getConfig()
   const workDir = getWorkingDir(spaceId)
@@ -190,13 +196,8 @@ export async function sendMessage(
       spaceDir
     })
 
-    // Apply dynamic configurations (AI Browser system prompt, Thinking mode, Effort, Subagents)
-    if (aiBrowserEnabled) {
-      sdkOptions.systemPrompt = buildSystemPromptWithAIBrowser(
-        { workDir, modelInfo: resolvedCredentials.displayModel },
-        AI_BROWSER_SYSTEM_PROMPT
-      )
-    }
+    let effectiveMessage = message
+    let isOmcSessionApplied = false
 
     // Thinking mode configuration
     if (effectiveThinkingMode === 'adaptive') {
@@ -256,6 +257,36 @@ export async function sendMessage(
       sdkOptions.allowedTools = [...sdkOptions.allowedTools, 'Task']
     }
 
+    // OMC Session-first orchestration (with graceful fallback)
+    if (orchestration?.provider === 'omc' && orchestration.mode === 'session') {
+      try {
+        const omcSession = createOmcSessionForSpace(workDir)
+        const processedPrompt = omcSession.processPrompt(message)
+        if (typeof processedPrompt === 'string' && processedPrompt.trim().length > 0) {
+          effectiveMessage = processedPrompt
+        }
+
+        const omcOptions = extractOmcSessionOptions(omcSession)
+        mergeOmcSessionIntoSdkOptions(sdkOptions, omcOptions, {
+          aiBrowserEnabled: !!aiBrowserEnabled,
+          aiBrowserPrompt: AI_BROWSER_SYSTEM_PROMPT
+        })
+        isOmcSessionApplied = true
+      } catch (omcError) {
+        console.warn(`[Agent][${conversationId}] OMC session orchestration failed, falling back to manual prompt path:`, omcError)
+        mergeOmcSessionIntoSdkOptions(sdkOptions, {}, {
+          aiBrowserEnabled: !!aiBrowserEnabled,
+          aiBrowserPrompt: AI_BROWSER_SYSTEM_PROMPT
+        })
+      }
+    } else {
+      // Non-OMC path still needs AI Browser prompt layering.
+      mergeOmcSessionIntoSdkOptions(sdkOptions, {}, {
+        aiBrowserEnabled: !!aiBrowserEnabled,
+        aiBrowserPrompt: AI_BROWSER_SYSTEM_PROMPT
+      })
+    }
+
     const t0 = Date.now()
     console.log(`[Agent][${conversationId}] Getting or creating V2 session...`)
 
@@ -271,12 +302,16 @@ export async function sendMessage(
     } else if (subagents && subagents.length > 0) {
       console.log(`[Agent][${conversationId}] Subagents: manual [${subagents.map(a => a.name).join(', ')}]`)
     }
+    if (isOmcSessionApplied) {
+      console.log(`[Agent][${conversationId}] Orchestration: OMC session`)
+    }
 
     // Session config for rebuild detection
     const sessionConfig: SessionConfig = {
       aiBrowserEnabled: !!aiBrowserEnabled,
       effort: effort || null,
-      subagentsSignature: createSubagentsSignature(subagents, autoGenerateSubagents)
+      subagentsSignature: createSubagentsSignature(subagents, autoGenerateSubagents),
+      orchestrationSignature: createOrchestrationSignature(orchestration)
     }
 
     // Get or create persistent V2 session for this conversation
@@ -320,7 +355,7 @@ export async function sendMessage(
       sessionState,
       spaceId,
       conversationId,
-      message,
+      effectiveMessage,
       images,
       canvasContext,
       resolvedCredentials.displayModel,

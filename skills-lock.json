@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "changelog-automation": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "87e8104a7842f5fff034e926ae7ae6fa20708a2735284b6e6906f681bc060f74"
+    },
+    "code-review-excellence": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "aa718056ed922cc6ff3a29567b30af78a9265a8a415e70f0a2b71eb19608e4ae"
+    },
+    "crafting-effective-readmes": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "cb11facecbb4a15f7ca6cfac2e740ac66798676c246c057879a71babb27c9a4f"
+    },
+    "docs-writer": {
+      "source": "google-gemini/gemini-cli",
+      "sourceType": "github",
+      "computedHash": "057ca87855e723550a666d1afda4b42b90aeb972372e5877029b3ce1a8f8e488"
+    },
+    "playwright-e2e-testing": {
+      "source": "bobmatnyc/claude-mpm-skills",
+      "sourceType": "github",
+      "computedHash": "4d834eae61bb2d437cffc28810894bd2173f7103b3881cbd338a523ce46b6f5a"
+    },
+    "technical-writing": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "14551629ed448319583d40ff1b466e1514355728bfb685ce68c1007c9b749eb7"
+    },
+    "typescript-best-practices": {
+      "source": "0xbigboss/claude-code",
+      "sourceType": "github",
+      "computedHash": "b85adad2caf537bb27fa82910cfc356a2176897cda4ae3fcb1d2b021798e1415"
+    }
+  }
+}

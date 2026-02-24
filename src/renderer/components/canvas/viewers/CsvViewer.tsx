@@ -95,7 +95,7 @@ export function CsvViewer({ tab, onScrollChange }: CsvViewerProps) {
     const dataRows = parsed.slice(1)
 
     // Normalize column count (some rows may have different lengths)
-    const maxCols = Math.max(...parsed.map(row => row.length))
+    const maxCols = parsed.reduce((max, row) => Math.max(max, row.length), 0)
 
     return {
       rows: parsed,

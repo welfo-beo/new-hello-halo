@@ -5,7 +5,7 @@
  * This file has no dependencies and is imported by all other agent modules.
  */
 
-import { BrowserWindow } from 'electron'
+import type { BrowserWindow } from 'electron'
 
 // ============================================
 // API Credentials
@@ -85,6 +85,19 @@ export type EffortLevel = 'max' | 'high' | 'medium' | 'low'
 export type ThinkingMode = 'disabled' | 'enabled' | 'adaptive'
 
 // ============================================
+// OMC Orchestration
+// ============================================
+
+export type OmcWorkflowMode = 'autopilot' | 'ralph' | 'custom'
+
+export interface OmcOrchestrationRequest {
+  provider: 'omc'
+  mode: 'session'
+  workflowMode: OmcWorkflowMode
+  selectedAgents: string[]
+}
+
+// ============================================
 // Subagent Definition
 // ============================================
 
@@ -114,6 +127,7 @@ export interface AgentRequest {
   effort?: EffortLevel        // Effort level: max, high, medium, low
   subagents?: SubagentDefinition[]  // Custom subagent definitions
   autoGenerateSubagents?: boolean   // Let Claude autonomously spawn built-in general-purpose subagent
+  orchestration?: OmcOrchestrationRequest
   model?: string              // Model to use (for future model switching)
   canvasContext?: CanvasContext  // Current canvas state for AI awareness
 }
@@ -209,6 +223,7 @@ export interface SessionConfig {
   aiBrowserEnabled: boolean
   effort: EffortLevel | null
   subagentsSignature: string
+  orchestrationSignature: string
   // thinkingEnabled is dynamic via setMaxThinkingTokens, no rebuild needed
 }
 

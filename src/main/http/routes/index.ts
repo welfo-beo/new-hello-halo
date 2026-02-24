@@ -4,7 +4,8 @@
  */
 
 import { Express, Request, Response } from 'express'
-import { BrowserWindow, app as electronApp } from 'electron'
+import { app as electronApp } from 'electron'
+import type { BrowserWindow } from 'electron'
 import { createReadStream, statSync, existsSync, readdirSync, realpathSync } from 'fs'
 import { join, basename, relative, resolve, isAbsolute } from 'path'
 import { createGzip } from 'zlib'
@@ -275,7 +276,7 @@ export function registerApiRoutes(app: Express, mainWindow: BrowserWindow | null
 
   // ===== Agent Routes =====
   app.post('/api/agent/message', async (req: Request, res: Response) => {
-    const { spaceId, conversationId, message, resumeSessionId, images, thinkingEnabled, aiBrowserEnabled, thinkingMode, thinkingBudget, effort, subagents, canvasContext } = req.body
+    const { spaceId, conversationId, message, resumeSessionId, images, thinkingEnabled, aiBrowserEnabled, thinkingMode, thinkingBudget, effort, subagents, orchestration, canvasContext } = req.body
     const result = await agentController.sendMessage(mainWindow, {
       spaceId,
       conversationId,
@@ -288,6 +289,7 @@ export function registerApiRoutes(app: Express, mainWindow: BrowserWindow | null
       thinkingBudget,
       effort,
       subagents,
+      orchestration,
       canvasContext
     })
     res.json(result)
@@ -337,6 +339,24 @@ export function registerApiRoutes(app: Express, mainWindow: BrowserWindow | null
   // Test MCP server connections
   app.post('/api/agent/test-mcp', async (req: Request, res: Response) => {
     const result = await agentController.testMcpConnections(mainWindow)
+    res.json(result)
+  })
+
+  // OMC agent list (for Dev Mode UI)
+  app.get('/api/agent/omc-agents', async (_req: Request, res: Response) => {
+    const result = agentController.getOmcAgents()
+    res.json(result)
+  })
+
+  // OMC agent definitions (for Dev Mode execution)
+  app.get('/api/agent/omc-agent-defs', async (_req: Request, res: Response) => {
+    const result = agentController.getOmcAgentDefs()
+    res.json(result)
+  })
+
+  // OMC orchestration system prompt
+  app.get('/api/agent/omc-system-prompt', async (_req: Request, res: Response) => {
+    const result = agentController.getOmcSystemPrompt()
     res.json(result)
   })
 

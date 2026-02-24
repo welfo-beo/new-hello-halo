@@ -113,21 +113,38 @@ export function Spotlight({
   // Update positions on mount and resize
   useEffect(() => {
     updatePositions()
-
-    // Re-calculate on resize
     window.addEventListener('resize', updatePositions)
 
-    // Also observe DOM changes (in case target renders later)
-    const observer = new MutationObserver(() => {
-      setTimeout(updatePositions, 50)
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
+    // MutationObserver only until target is found, then switch to ResizeObserver
+    let mutationObs: MutationObserver | null = null
+    let resizeObs: ResizeObserver | null = null
+
+    const target = document.querySelector(targetSelector)
+    if (target) {
+      // Target exists — watch for size/position changes only
+      resizeObs = new ResizeObserver(updatePositions)
+      resizeObs.observe(target)
+    } else {
+      // Target not yet in DOM — watch for it to appear
+      mutationObs = new MutationObserver(() => {
+        const el = document.querySelector(targetSelector)
+        if (el) {
+          mutationObs?.disconnect()
+          mutationObs = null
+          updatePositions()
+          resizeObs = new ResizeObserver(updatePositions)
+          resizeObs.observe(el)
+        }
+      })
+      mutationObs.observe(document.body, { childList: true, subtree: true })
+    }
 
     return () => {
       window.removeEventListener('resize', updatePositions)
-      observer.disconnect()
+      mutationObs?.disconnect()
+      resizeObs?.disconnect()
     }
-  }, [updatePositions])
+  }, [updatePositions, targetSelector])
 
   // Timeout protection: if target element is not found within 5 seconds, auto-skip
   // This prevents the app from being stuck in a broken onboarding state

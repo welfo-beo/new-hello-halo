@@ -104,8 +104,15 @@ export interface HaloAPI {
       prompt: string
       tools?: string[]
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+      skills?: string[]
     }>
     autoGenerateSubagents?: boolean
+    orchestration?: {
+      provider: 'omc'
+      mode: 'session'
+      workflowMode: 'autopilot' | 'ralph' | 'custom'
+      selectedAgents: string[]
+    }
     canvasContext?: {  // Canvas context for AI awareness
       isOpen: boolean
       tabCount: number
@@ -131,6 +138,9 @@ export interface HaloAPI {
   ensureSessionWarm: (spaceId: string, conversationId: string) => Promise<IpcResponse>
   testMcpConnections: () => Promise<{ success: boolean; servers: unknown[]; error?: string }>
   answerQuestion: (data: { conversationId: string; id: string; answers: Record<string, string> }) => Promise<IpcResponse>
+  getOmcAgents: () => Promise<IpcResponse>
+  getOmcAgentDefs: () => Promise<IpcResponse>
+  getOmcSystemPrompt: () => Promise<IpcResponse>
 
   // Event listeners
   onAgentMessage: (callback: (data: unknown) => void) => () => void
@@ -347,6 +357,17 @@ export interface HaloAPI {
   gitCheckout: (spaceId: string, branch: string, create?: boolean) => Promise<IpcResponse>
   gitStagedDiff: (spaceId: string) => Promise<IpcResponse>
   gitCurrentBranch: (spaceId: string) => Promise<IpcResponse>
+  gitPush: (spaceId: string, remote?: string, branch?: string) => Promise<IpcResponse>
+  gitPull: (spaceId: string, remote?: string, branch?: string) => Promise<IpcResponse>
+  gitFetch: (spaceId: string, remote?: string) => Promise<IpcResponse>
+  gitMerge: (spaceId: string, branch: string) => Promise<IpcResponse>
+  gitStash: (spaceId: string, action?: string, message?: string) => Promise<IpcResponse>
+  gitReset: (spaceId: string, mode?: string, ref?: string) => Promise<IpcResponse>
+  gitInit: (spaceId: string) => Promise<IpcResponse>
+  gitClone: (url: string, targetDir: string) => Promise<IpcResponse>
+  gitRemotes: (spaceId: string) => Promise<IpcResponse>
+  gitRemoteAdd: (spaceId: string, name: string, url: string) => Promise<IpcResponse>
+  gitRemoteRemove: (spaceId: string, name: string) => Promise<IpcResponse>
 }
 
 interface IpcResponse<T = unknown> {
@@ -432,6 +453,9 @@ const api: HaloAPI = {
   ensureSessionWarm: (spaceId, conversationId) => ipcRenderer.invoke('agent:ensure-session-warm', spaceId, conversationId),
   testMcpConnections: () => ipcRenderer.invoke('agent:test-mcp'),
   answerQuestion: (data) => ipcRenderer.invoke('agent:answer-question', data),
+  getOmcAgents: () => ipcRenderer.invoke('agent:get-omc-agents'),
+  getOmcAgentDefs: () => ipcRenderer.invoke('agent:get-omc-agent-defs'),
+  getOmcSystemPrompt: () => ipcRenderer.invoke('agent:get-omc-system-prompt'),
 
   // Event listeners
   onAgentMessage: (callback) => createEventListener('agent:message', callback),
@@ -607,6 +631,17 @@ const api: HaloAPI = {
   gitCheckout: (spaceId, branch, create) => ipcRenderer.invoke('git:checkout', spaceId, branch, create),
   gitStagedDiff: (spaceId) => ipcRenderer.invoke('git:staged-diff', spaceId),
   gitCurrentBranch: (spaceId) => ipcRenderer.invoke('git:current-branch', spaceId),
+  gitPush: (spaceId, remote, branch) => ipcRenderer.invoke('git:push', spaceId, remote, branch),
+  gitPull: (spaceId, remote, branch) => ipcRenderer.invoke('git:pull', spaceId, remote, branch),
+  gitFetch: (spaceId, remote) => ipcRenderer.invoke('git:fetch', spaceId, remote),
+  gitMerge: (spaceId, branch) => ipcRenderer.invoke('git:merge', spaceId, branch),
+  gitStash: (spaceId, action, message) => ipcRenderer.invoke('git:stash', spaceId, action, message),
+  gitReset: (spaceId, mode, ref) => ipcRenderer.invoke('git:reset', spaceId, mode, ref),
+  gitInit: (spaceId) => ipcRenderer.invoke('git:init', spaceId),
+  gitClone: (url, targetDir) => ipcRenderer.invoke('git:clone', url, targetDir),
+  gitRemotes: (spaceId) => ipcRenderer.invoke('git:remotes', spaceId),
+  gitRemoteAdd: (spaceId, name, url) => ipcRenderer.invoke('git:remote-add', spaceId, name, url),
+  gitRemoteRemove: (spaceId, name) => ipcRenderer.invoke('git:remote-remove', spaceId, name),
 }
 
 contextBridge.exposeInMainWorld('halo', api)

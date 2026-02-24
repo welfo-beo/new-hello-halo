@@ -62,9 +62,11 @@ export function HtmlViewer({ tab }: HtmlViewerProps) {
       }
     }
 
-    // Fallback: Open as data URI in new tab
-    const dataUri = `data:text/html;charset=utf-8,${encodeURIComponent(content)}`
-    window.open(dataUri, '_blank')
+    // Fallback: Open via Blob URL (avoids data URI XSS in some browsers)
+    const blob = new Blob([content], { type: 'text/html' })
+    const blobUrl = URL.createObjectURL(blob)
+    window.open(blobUrl, '_blank')
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000)
   }
 
   // Count lines for source view
@@ -174,7 +176,7 @@ export function HtmlViewer({ tab }: HtmlViewerProps) {
             ref={iframeRef}
             srcDoc={content}
             className="w-full h-full border-0 bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            sandbox="allow-scripts allow-forms allow-popups"
             title={tab.title}
           />
         ) : (

@@ -3,7 +3,7 @@
  * Used by both IPC handlers and HTTP routes
  */
 
-import { BrowserWindow } from 'electron'
+import type { BrowserWindow } from 'electron'
 import {
   sendMessage as agentSendMessage,
   stopGeneration as agentStopGeneration,
@@ -13,6 +13,11 @@ import {
   testMcpConnections as agentTestMcpConnections,
   resolveQuestion
 } from '../services/agent'
+import {
+  getOmcAgentList,
+  getOmcAgents as getOmcAgentDefinitions,
+  getOmcSystemPrompt as getOmcSystemPromptText
+} from '../services/omc.service'
 
 // Image attachment type for multi-modal messages
 interface ImageAttachment {
@@ -30,8 +35,42 @@ export interface SendMessageRequest {
   message: string
   resumeSessionId?: string
   images?: ImageAttachment[]  // Optional images for multi-modal messages
+  thinkingMode?: 'disabled' | 'enabled' | 'adaptive'
+  thinkingBudget?: number
+  effort?: 'max' | 'high' | 'medium' | 'low'
   thinkingEnabled?: boolean   // Enable extended thinking mode
   aiBrowserEnabled?: boolean  // Enable AI Browser tools
+  subagents?: Array<{
+    name: string
+    description: string
+    prompt: string
+    tools?: string[]
+    model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+    skills?: string[]
+  }>
+  orchestration?: {
+    provider: 'omc'
+    mode: 'session'
+    workflowMode: 'autopilot' | 'ralph' | 'custom'
+    selectedAgents: string[]
+  }
+  canvasContext?: {
+    isOpen: boolean
+    tabCount: number
+    activeTab: {
+      type: string
+      title: string
+      url?: string
+      path?: string
+    } | null
+    tabs: Array<{
+      type: string
+      title: string
+      url?: string
+      path?: string
+      isActive: boolean
+    }>
+  }
 }
 
 export interface ControllerResponse<T = unknown> {
@@ -146,6 +185,42 @@ export async function testMcpConnections(mainWindow?: BrowserWindow | null): Pro
   try {
     const result = await agentTestMcpConnections(mainWindow)
     return result
+  } catch (error: unknown) {
+    const err = error as Error
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Get OMC agent list for renderer display
+ */
+export function getOmcAgents(): ControllerResponse {
+  try {
+    return { success: true, data: getOmcAgentList() }
+  } catch (error: unknown) {
+    const err = error as Error
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Get full OMC agent definitions for execution
+ */
+export function getOmcAgentDefs(): ControllerResponse {
+  try {
+    return { success: true, data: getOmcAgentDefinitions() }
+  } catch (error: unknown) {
+    const err = error as Error
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Get OMC orchestration system prompt
+ */
+export function getOmcSystemPrompt(): ControllerResponse<string> {
+  try {
+    return { success: true, data: getOmcSystemPromptText() }
   } catch (error: unknown) {
     const err = error as Error
     return { success: false, error: err.message }

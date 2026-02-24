@@ -6,6 +6,34 @@
 
 ---
 
+## OMC Session-First Integration (v4.4.4)
+
+Dev Mode OMC integration was upgraded from "prompt-only simulation" to "session-first orchestration" with `oh-my-claude-sisyphus@4.4.4`.
+
+**Key changes**:
+- Upgraded dependency to `oh-my-claude-sisyphus@4.4.4`
+- Added export-compatible OMC session adapter: prefer `createSisyphusSession`, fallback to `createOmcSession`
+- Added `orchestration` request metadata end-to-end:
+  - renderer API -> preload -> IPC/HTTP routes -> controller -> main agent service
+- Dev Mode switched to OMC mode templates (`autopilot`, `ralph`, `custom`) and now sends orchestration metadata explicitly
+- Main send pipeline now supports OMC session orchestration:
+  - `processPrompt()` drives final message prompt
+  - `queryOptions` merges into SDK options with strict precedence:
+    - `systemPrompt`: Halo base -> OMC -> AI Browser
+    - `agents`: local selected agents override OMC defaults
+    - `allowedTools`: union + dedupe
+    - `mcpServers`: local servers override OMC defaults on key conflicts
+    - `effort` / `thinking`: preserved from request
+- Added orchestration-aware V2 session rebuild key (`orchestrationSignature`)
+- Fixed subagent `tools` passthrough in Dev Mode resolver
+- Added category mapping coverage utilities/tests for OMC agent definitions
+
+**Reliability behavior**:
+- OMC session initialization failure now auto-falls back to existing manual prompt path (non-blocking)
+- Existing OMC agent routes remain available for Electron and remote HTTP clients
+
+---
+
 ## Subagents
 
 Per-space custom subagent definitions. Users can define named agents with custom system prompts, tool restrictions, and model selection. The main agent can delegate tasks to these subagents via the `Task` tool.

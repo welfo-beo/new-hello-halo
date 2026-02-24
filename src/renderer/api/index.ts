@@ -374,6 +374,12 @@ export const api = {
       tools?: string[]
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
     }>
+    orchestration?: {
+      provider: 'omc'
+      mode: 'session'
+      workflowMode: 'autopilot' | 'ralph' | 'custom'
+      selectedAgents: string[]
+    }
     canvasContext?: {
       isOpen: boolean
       tabCount: number
@@ -467,6 +473,28 @@ export const api = {
     // HTTP mode: call backend endpoint
     const result = await httpRequest('POST', '/api/agent/test-mcp')
     return result as { success: boolean; servers: unknown[]; error?: string }
+  },
+
+  // OMC (Oh-My-ClaudeCode) agent integration
+  getOmcAgents: async (): Promise<ApiResponse> => {
+    if (isElectron()) {
+      return window.halo.getOmcAgents()
+    }
+    return httpRequest('GET', '/api/agent/omc-agents')
+  },
+
+  getOmcAgentDefs: async (): Promise<ApiResponse> => {
+    if (isElectron()) {
+      return window.halo.getOmcAgentDefs()
+    }
+    return httpRequest('GET', '/api/agent/omc-agent-defs')
+  },
+
+  getOmcSystemPrompt: async (): Promise<ApiResponse> => {
+    if (isElectron()) {
+      return window.halo.getOmcSystemPrompt()
+    }
+    return httpRequest('GET', '/api/agent/omc-system-prompt')
   },
 
   // ===== Artifact =====
@@ -1306,6 +1334,61 @@ export const api = {
   gitCurrentBranch: async (spaceId: string): Promise<ApiResponse> => {
     if (isElectron()) return window.halo.gitCurrentBranch(spaceId)
     return httpRequest('GET', `/api/git/current-branch?spaceId=${spaceId}`)
+  },
+
+  gitPush: async (spaceId: string, remote?: string, branch?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitPush(spaceId, remote, branch)
+    return httpRequest('POST', '/api/git/push', { spaceId, remote, branch })
+  },
+
+  gitPull: async (spaceId: string, remote?: string, branch?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitPull(spaceId, remote, branch)
+    return httpRequest('POST', '/api/git/pull', { spaceId, remote, branch })
+  },
+
+  gitFetch: async (spaceId: string, remote?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitFetch(spaceId, remote)
+    return httpRequest('POST', '/api/git/fetch', { spaceId, remote })
+  },
+
+  gitMerge: async (spaceId: string, branch: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitMerge(spaceId, branch)
+    return httpRequest('POST', '/api/git/merge', { spaceId, branch })
+  },
+
+  gitStash: async (spaceId: string, action?: string, message?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitStash(spaceId, action, message)
+    return httpRequest('POST', '/api/git/stash', { spaceId, action, message })
+  },
+
+  gitReset: async (spaceId: string, mode?: string, ref?: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitReset(spaceId, mode, ref)
+    return httpRequest('POST', '/api/git/reset', { spaceId, mode, ref })
+  },
+
+  gitInit: async (spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitInit(spaceId)
+    return httpRequest('POST', '/api/git/init', { spaceId })
+  },
+
+  gitClone: async (url: string, targetDir: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitClone(url, targetDir)
+    return httpRequest('POST', '/api/git/clone', { url, targetDir })
+  },
+
+  gitRemotes: async (spaceId: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitRemotes(spaceId)
+    return httpRequest('GET', `/api/git/remotes?spaceId=${spaceId}`)
+  },
+
+  gitRemoteAdd: async (spaceId: string, name: string, url: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitRemoteAdd(spaceId, name, url)
+    return httpRequest('POST', '/api/git/remote-add', { spaceId, name, url })
+  },
+
+  gitRemoteRemove: async (spaceId: string, name: string): Promise<ApiResponse> => {
+    if (isElectron()) return window.halo.gitRemoteRemove(spaceId, name)
+    return httpRequest('POST', '/api/git/remote-remove', { spaceId, name })
   },
 }
 

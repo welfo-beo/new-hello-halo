@@ -31,6 +31,7 @@ import {
 } from './helpers'
 import { registerProcess, unregisterProcess, getCurrentInstanceId } from '../health'
 import { resolveCredentialsForSdk, buildBaseSdkOptions } from './sdk-config'
+import { needsSessionRebuildConfig } from './session-config'
 
 // ============================================
 // Session Maps
@@ -326,9 +327,7 @@ function migrateSessionIfNeeded(workDir: string, sessionId: string): boolean {
  * Only "process-level" params need rebuild; runtime params use setXxx() methods
  */
 export function needsSessionRebuild(existing: V2SessionInfo, newConfig: SessionConfig): boolean {
-  return existing.config.aiBrowserEnabled !== newConfig.aiBrowserEnabled
-    || existing.config.effort !== newConfig.effort
-    || existing.config.subagentsSignature !== newConfig.subagentsSignature
+  return needsSessionRebuildConfig(existing.config, newConfig)
 }
 
 /**
@@ -473,7 +472,7 @@ export async function getOrCreateV2Session(
     conversationId,
     createdAt: Date.now(),
     lastUsedAt: Date.now(),
-    config: config || { aiBrowserEnabled: false, effort: null, subagentsSignature: '' },
+    config: config || { aiBrowserEnabled: false, effort: null, subagentsSignature: '', orchestrationSignature: '' },
     credentialsGeneration: getCredentialsGeneration()
   })
 

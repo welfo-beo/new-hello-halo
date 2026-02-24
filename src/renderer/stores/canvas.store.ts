@@ -61,11 +61,6 @@ interface CanvasState {
   updateTabContent: (tabId: string, content: string) => void
   saveScrollPosition: (tabId: string, position: number) => void
 
-  // Browser Actions (kept for compatibility, but managed by canvasLifecycle)
-  setBrowserViewId: (tabId: string, viewId: string) => void
-  updateBrowserState: (tabId: string, state: Partial<BrowserState>) => void
-  updateBrowserUrl: (tabId: string, url: string, title?: string) => void
-
   // Layout Actions
   setOpen: (open: boolean) => void
   toggleOpen: () => void
@@ -180,25 +175,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => {
 
     saveScrollPosition: (tabId: string, position: number) => {
       canvasLifecycle.saveScrollPosition(tabId, position)
-    },
-
-    // ============================================
-    // Browser Actions (no-ops, managed by canvasLifecycle)
-    // ============================================
-
-    setBrowserViewId: (_tabId: string, _viewId: string) => {
-      // No-op: BrowserView lifecycle is managed by canvasLifecycle
-      console.warn('[canvas.store] setBrowserViewId is deprecated, managed by canvasLifecycle')
-    },
-
-    updateBrowserState: (_tabId: string, _state: Partial<BrowserState>) => {
-      // No-op: Browser state updates come from canvasLifecycle via IPC
-      console.warn('[canvas.store] updateBrowserState is deprecated, managed by canvasLifecycle')
-    },
-
-    updateBrowserUrl: (_tabId: string, _url: string, _title?: string) => {
-      // No-op: URL updates come from canvasLifecycle via IPC
-      console.warn('[canvas.store] updateBrowserUrl is deprecated, managed by canvasLifecycle')
     },
 
     // ============================================

@@ -209,12 +209,21 @@ export function HomePage() {
           </>
         }
         right={
-          <button
-            onClick={() => setView('settings')}
-            className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          <>
+            <button
+              onClick={() => setView('devMode')}
+              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+              title={t('Dev Mode')}
+            >
+              <Monitor className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setView('settings')}
+              className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </>
         }
       />
 

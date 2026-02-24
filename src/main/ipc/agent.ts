@@ -5,6 +5,7 @@
 import { ipcMain } from 'electron'
 import { sendMessage, stopGeneration, getSessionState, ensureSessionWarm, testMcpConnections, resolveQuestion } from '../services/agent'
 import { getMainWindow } from '../services/window.service'
+import { getOmcAgentList, getOmcAgents, getOmcSystemPrompt } from '../services/omc.service'
 
 export function registerAgentHandlers(): void {
 
@@ -26,7 +27,42 @@ export function registerAgentHandlers(): void {
           name?: string
           size?: number
         }>
-        thinkingEnabled?: boolean  // Enable extended thinking mode
+        aiBrowserEnabled?: boolean
+        thinkingEnabled?: boolean
+        thinkingMode?: 'disabled' | 'enabled' | 'adaptive'
+        thinkingBudget?: number
+        effort?: 'max' | 'high' | 'medium' | 'low'
+        subagents?: Array<{
+          name: string
+          description: string
+          prompt: string
+          tools?: string[]
+          model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+          skills?: string[]
+        }>
+        orchestration?: {
+          provider: 'omc'
+          mode: 'session'
+          workflowMode: 'autopilot' | 'ralph' | 'custom'
+          selectedAgents: string[]
+        }
+        canvasContext?: {
+          isOpen: boolean
+          tabCount: number
+          activeTab: {
+            type: string
+            title: string
+            url?: string
+            path?: string
+          } | null
+          tabs: Array<{
+            type: string
+            title: string
+            url?: string
+            path?: string
+            isActive: boolean
+          }>
+        }
       }
     ) => {
       try {
@@ -111,6 +147,36 @@ export function registerAgentHandlers(): void {
     } catch (error: unknown) {
       const err = error as Error
       return { success: false, servers: [], error: err.message }
+    }
+  })
+
+  // Get OMC agent list (names, descriptions, models, categories)
+  ipcMain.handle('agent:get-omc-agents', async () => {
+    try {
+      return { success: true, data: getOmcAgentList() }
+    } catch (error: unknown) {
+      const err = error as Error
+      return { success: false, error: err.message }
+    }
+  })
+
+  // Get full OMC agent definitions (with prompts, for execution)
+  ipcMain.handle('agent:get-omc-agent-defs', async () => {
+    try {
+      return { success: true, data: getOmcAgents() }
+    } catch (error: unknown) {
+      const err = error as Error
+      return { success: false, error: err.message }
+    }
+  })
+
+  // Get OMC system prompt
+  ipcMain.handle('agent:get-omc-system-prompt', async () => {
+    try {
+      return { success: true, data: getOmcSystemPrompt() }
+    } catch (error: unknown) {
+      const err = error as Error
+      return { success: false, error: err.message }
     }
   })
 }

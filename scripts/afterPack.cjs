@@ -82,9 +82,56 @@ function cleanNonTargetWatchers(context) {
   console.log(`[afterPack] ${key}: keeping @parcel/${targetPkg}`);
 }
 
+/**
+ * Remove non-target platform binaries from @anthropic-ai packages.
+ * These packages ship vendor binaries for all platforms but only the
+ * current platform's files actually exist on disk. Missing paths cause
+ * 7zip to fail during NSIS packaging on Windows.
+ */
+function cleanNonTargetVendorBinaries(context) {
+  const platform = context.electronPlatformName;
+  if (platform !== 'win32') return;
+
+  const unpackedDir = getUnpackedDir(context);
+  const pkgs = ['@anthropic-ai/claude-agent-sdk', '@anthropic-ai/claude-code'];
+
+  for (const pkg of pkgs) {
+    const pkgDir = path.join(unpackedDir, 'node_modules', ...pkg.split('/'));
+    if (!fs.existsSync(pkgDir)) continue;
+
+    // Remove non-win32 ripgrep vendor dirs
+    const ripgrepDir = path.join(pkgDir, 'vendor', 'ripgrep');
+    if (fs.existsSync(ripgrepDir)) {
+      for (const entry of fs.readdirSync(ripgrepDir, { withFileTypes: true })) {
+        if (entry.isDirectory() && !entry.name.includes('win32')) {
+          fs.rmSync(path.join(ripgrepDir, entry.name), { recursive: true, force: true });
+        }
+      }
+      // Remove COPYING if it's a broken ref
+      const copying = path.join(ripgrepDir, 'COPYING');
+      if (!fs.existsSync(copying)) {
+        try { fs.unlinkSync(copying); } catch {}
+      }
+    }
+
+    // Remove wasm files that don't exist (broken refs)
+    for (const f of fs.readdirSync(pkgDir)) {
+      if (f.endsWith('.wasm')) {
+        const full = path.join(pkgDir, f);
+        try { fs.accessSync(full); } catch { try { fs.unlinkSync(full); } catch {} }
+      }
+    }
+
+    console.log(`[afterPack] Cleaned non-target binaries from ${pkg}`);
+  }
+}
+
 module.exports = async function(context) {
   // Clean non-target watcher packages from unpacked output
   cleanNonTargetWatchers(context);
+
+  // Clean non-target vendor binaries from @anthropic-ai packages
+  cleanNonTargetVendorBinaries(context);
 
   // macOS ad-hoc signing (other platforms skip)
   if (context.electronPlatformName !== 'darwin') {

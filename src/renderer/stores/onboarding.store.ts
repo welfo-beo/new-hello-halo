@@ -34,7 +34,7 @@ interface OnboardingState {
 
   // Actions
   startOnboarding: () => void
-  nextStep: () => void
+  nextStep: (expectedCurrent?: OnboardingStep) => void
   skipOnboarding: () => void
   completeOnboarding: () => void
   setMockAnimating: (animating: boolean) => void
@@ -72,8 +72,11 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     set({ isActive: true, currentStep: 'halo-space' })
   },
 
-  nextStep: () => {
+  nextStep: (expectedCurrent?: OnboardingStep) => {
     const { currentStep } = get()
+
+    // Guard: if caller expects a specific current step, only advance if it matches
+    if (expectedCurrent && currentStep !== expectedCurrent) return
 
     const stepOrder: OnboardingStep[] = ['halo-space', 'send-message', 'view-artifact', 'completed']
     const currentIndex = stepOrder.indexOf(currentStep)
@@ -82,7 +85,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       const nextStep = stepOrder[currentIndex + 1]
       set({ currentStep: nextStep })
 
-      // If reached completed, finish onboarding
       if (nextStep === 'completed') {
         get().completeOnboarding()
       }

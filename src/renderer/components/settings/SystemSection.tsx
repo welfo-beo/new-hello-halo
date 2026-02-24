@@ -372,7 +372,9 @@ export function SystemSection({ config, setConfig }: SystemSectionProps) {
               <div className="mt-4 space-y-3">
                 {/* Health Status Summary */}
                 <div
-                  className={`p-4 rounded-lg ${getHealthStatusStyle('healthy').bg} cursor-pointer`}
+                  className={`p-4 rounded-lg ${getHealthStatusStyle(
+                    (healthReport.health.consecutiveFailures > 0 || healthReport.processes.orphansFound > 0 || healthReport.recentErrors.length > 0) ? 'degraded' : 'healthy'
+                  ).bg} cursor-pointer`}
                   onClick={() => setDiagnosticsExpanded(!diagnosticsExpanded)}
                 >
                   <div className="flex items-center justify-between">

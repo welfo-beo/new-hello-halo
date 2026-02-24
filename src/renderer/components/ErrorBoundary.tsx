@@ -59,10 +59,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {/* Title */}
             <h1 className="text-xl font-medium text-center mb-2">
-              Something went wrong
+              Something went wrong / 出现了问题
             </h1>
             <p className="text-muted-foreground text-sm text-center mb-6">
-              An error occurred while rendering the application. Please copy the error below and report it.
+              An error occurred while rendering. Please copy the error below and report it.
             </p>
 
             {/* Error Details */}
@@ -92,6 +92,40 @@ export class ErrorBoundary extends Component<Props, State> {
       )
     }
 
+    return this.props.children
+  }
+}
+
+/**
+ * Lightweight section-level error boundary for Canvas viewers, Chat, Settings, etc.
+ * Shows inline error with retry instead of full-page crash.
+ */
+export class SectionErrorBoundary extends Component<Props, { hasError: boolean; error: Error | null }> {
+  state = { hasError: false, error: null as Error | null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[SectionErrorBoundary]', error, info.componentStack)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+          <p className="text-sm font-medium mb-1">Something went wrong</p>
+          <p className="text-xs text-muted-foreground mb-3 max-w-xs">{this.state.error?.message}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded text-xs"
+          >
+            Try again
+          </button>
+        </div>
+      )
+    }
     return this.props.children
   }
 }
