@@ -408,7 +408,7 @@ const api: HaloAPI = {
   // Config
   getConfig: () => ipcRenderer.invoke('config:get'),
   setConfig: (updates) => ipcRenderer.invoke('config:set', updates),
-  validateApi: (apiKey, apiUrl, provider, model?) =>
+  validateApi: (apiKey: string, apiUrl: string, provider: string, model?: string) =>
     ipcRenderer.invoke('config:validate-api', apiKey, apiUrl, provider, model),
   refreshAISourcesConfig: () => ipcRenderer.invoke('config:refresh-ai-sources'),
 

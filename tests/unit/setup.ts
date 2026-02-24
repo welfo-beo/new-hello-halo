@@ -42,6 +42,7 @@ vi.mock('os', async (importOriginal) => {
 vi.mock('electron', () => {
   return {
     app: {
+      isPackaged: false,
       getPath: (name: string) => {
         const dir = globalThis.__HALO_TEST_DIR__ || '/tmp/halo-test-fallback'
         if (name === 'home') return dir
@@ -74,8 +75,8 @@ beforeEach(() => {
   // Create fresh unique test directory for this test
   const testDir = createTestDir()
 
-  // Create .halo directory structure
-  const haloDir = path.join(testDir, '.halo')
+  // Create .halo-dev directory structure (matches getHaloDir() when app.isPackaged=false)
+  const haloDir = path.join(testDir, '.halo-dev')
   const tempDir = path.join(haloDir, 'temp')
   const spacesDir = path.join(haloDir, 'spaces')
 

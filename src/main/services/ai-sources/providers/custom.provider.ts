@@ -34,6 +34,7 @@ import type {
 } from '../../../../shared/interfaces'
 import type {
   AISourceType,
+  AISourcesConfig,
   BackendRequestConfig,
   LegacyAISourcesConfig,
   CustomSourceConfig
@@ -62,8 +63,9 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  isConfigured(config: LegacyAISourcesConfig): boolean {
-    return !!(config.custom?.apiKey)
+  isConfigured(config: AISourcesConfig): boolean {
+    const legacyConfig = config as unknown as LegacyAISourcesConfig
+    return !!(legacyConfig.custom?.apiKey)
   }
 
   /**
@@ -71,8 +73,9 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  getBackendConfig(config: LegacyAISourcesConfig): BackendRequestConfig | null {
-    const customConfig = config.custom
+  getBackendConfig(config: AISourcesConfig): BackendRequestConfig | null {
+    const legacyConfig = config as unknown as LegacyAISourcesConfig
+    const customConfig = legacyConfig.custom
     if (!customConfig?.apiKey) {
       return null
     }
@@ -109,8 +112,9 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  getCurrentModel(config: LegacyAISourcesConfig): string | null {
-    return config.custom?.model || null
+  getCurrentModel(config: AISourcesConfig): string | null {
+    const legacyConfig = config as unknown as LegacyAISourcesConfig
+    return legacyConfig.custom?.model || null
   }
 
   /**
@@ -118,8 +122,9 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  async getAvailableModels(config: LegacyAISourcesConfig): Promise<string[]> {
-    const customConfig = config.custom
+  async getAvailableModels(config: AISourcesConfig): Promise<string[]> {
+    const legacyConfig = config as unknown as LegacyAISourcesConfig
+    const customConfig = legacyConfig.custom
     if (!customConfig) {
       return []
     }
@@ -137,7 +142,7 @@ export class CustomAISourceProvider implements AISourceProvider {
   /**
    * No refresh needed for custom API
    */
-  async refreshConfig(_config: LegacyAISourcesConfig): Promise<ProviderResult<Partial<LegacyAISourcesConfig>>> {
+  async refreshConfig(_config: AISourcesConfig): Promise<ProviderResult<Partial<AISourcesConfig>>> {
     // Custom API doesn't need refresh - configuration is static
     return { success: true, data: {} }
   }

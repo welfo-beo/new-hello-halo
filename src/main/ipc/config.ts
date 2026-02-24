@@ -85,7 +85,7 @@ export function registerConfigHandlers(): void {
       // Check if aiSources changed - run config validation
       if (incomingAiSources) {
         // Emit config change event for health monitoring
-        emitConfigChange('aiSources updated')
+        emitConfigChange(['aiSources updated'])
 
         // Run config probe to validate (async, don't block response)
         runConfigProbe().then(result => {

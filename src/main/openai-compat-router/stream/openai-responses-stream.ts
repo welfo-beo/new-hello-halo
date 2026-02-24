@@ -113,7 +113,7 @@ export class OpenAIResponsesStreamHandler extends BaseStreamHandler {
     this.ensureMessageStarted()
 
     // Handle error events
-    if (eventType === 'error' || eventType === 'response.error' || responseObj.error) {
+    if (eventType === 'error' || (eventType as string) === 'response.error' || responseObj.error) {
       this.writeError(JSON.stringify(responseObj.error || event.error || {}))
       this.markFinished()
       return
@@ -156,8 +156,8 @@ export class OpenAIResponsesStreamHandler extends BaseStreamHandler {
         break
 
       case 'response.completed':
-      case 'response.done':
-      case 'done':
+      case 'response.done' as ResponsesEventType:
+      case 'done' as ResponsesEventType:
         this.handleCompletion(responseObj)
         break
 

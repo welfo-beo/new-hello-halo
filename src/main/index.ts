@@ -340,6 +340,16 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // Prevent navigation away from the app (security: blocks malicious links in rendered content)
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const allowed = ['http://localhost', 'https://localhost', 'file://']
+    if (!allowed.some(prefix => url.startsWith(prefix))) {
+      event.preventDefault()
+      console.warn(`[Security] Blocked navigation to: ${url}`)
+      shell.openExternal(url)
+    }
+  })
+
   // Load the renderer
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])

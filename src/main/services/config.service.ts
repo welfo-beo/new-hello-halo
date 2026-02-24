@@ -329,6 +329,9 @@ interface HaloConfig {
     enabled: boolean
     port: number
   }
+  notifications?: {
+    taskComplete?: boolean
+  }
   onboarding: {
     completed: boolean
   }

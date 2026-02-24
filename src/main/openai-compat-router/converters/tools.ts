@@ -10,6 +10,7 @@
 import type {
   AnthropicTool,
   AnthropicToolChoice,
+  OpenAIChatJSONSchemaProperty,
   OpenAIChatTool,
   OpenAIChatToolChoice,
   OpenAIResponsesFunctionTool,
@@ -31,7 +32,7 @@ export function anthropicToolToOpenAIChatTool(tool: AnthropicTool): OpenAIChatTo
       description: tool.description || '',
       parameters: {
         type: 'object',
-        properties: tool.input_schema?.properties || {},
+        properties: (tool.input_schema?.properties || {}) as Record<string, OpenAIChatJSONSchemaProperty>,
         required: tool.input_schema?.required
       },
       strict: tool.strict
@@ -50,7 +51,7 @@ export function anthropicToolToResponsesTool(tool: AnthropicTool): OpenAIRespons
     description: tool.description || '',
     parameters: {
       type: 'object',
-      properties: tool.input_schema?.properties || {},
+      properties: (tool.input_schema?.properties || {}) as Record<string, OpenAIChatJSONSchemaProperty>,
       required: tool.input_schema?.required
     },
     strict: tool.strict

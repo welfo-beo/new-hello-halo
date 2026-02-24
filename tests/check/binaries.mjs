@@ -6,14 +6,15 @@
  * Verifies that all required binary dependencies are present before packaging.
  * This prevents shipping broken builds to users.
  *
- * Usage: node tests/check/binaries.mjs [--platform mac-arm64|mac-x64|win|linux|all]
+ * Usage: node tests/check/binaries.mjs [--platform mac-arm64|mac-x64|win|linux|all|auto]
  *
  * Platforms:
  *   mac-arm64 - Mac Apple Silicon (M1/M2/M3/M4)
  *   mac-x64   - Mac Intel
  *   win       - Windows x64
  *   linux     - Linux x64
- *   all       - All platforms (default)
+ *   all       - All platforms
+ *   auto      - Auto-detect from current OS/arch (default for npm run test:check)
  *
  * Exit codes:
  *   0 - All checks passed
@@ -269,12 +270,25 @@ function runChecks(targetPlatform = 'all') {
   }
 }
 
+/**
+ * Detect the current platform string from process.platform / process.arch.
+ */
+function detectPlatform() {
+  const map = {
+    'darwin-arm64': 'mac-arm64',
+    'darwin-x64': 'mac-x64',
+    'win32-x64': 'win',
+    'linux-x64': 'linux'
+  }
+  return map[`${process.platform}-${process.arch}`] || null
+}
+
 // Parse command line arguments
 function parseArgs() {
   const args = process.argv.slice(2)
   let platform = 'all'
 
-  const validPlatforms = ['mac-arm64', 'mac-x64', 'win', 'linux', 'all']
+  const validPlatforms = ['mac-arm64', 'mac-x64', 'win', 'linux', 'all', 'auto']
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--platform' && args[i + 1]) {
@@ -285,6 +299,16 @@ function parseArgs() {
         process.exit(1)
       }
     }
+  }
+
+  if (platform === 'auto') {
+    const detected = detectPlatform()
+    if (!detected) {
+      log.error(`Unsupported platform: ${process.platform}-${process.arch}`)
+      process.exit(1)
+    }
+    log.info(`Auto-detected platform: ${detected}`)
+    platform = detected
   }
 
   return { platform }

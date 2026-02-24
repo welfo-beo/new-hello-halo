@@ -13,6 +13,7 @@ interface WebSocketClient {
   ws: WebSocket
   authenticated: boolean
   subscriptions: Set<string> // conversationIds this client is subscribed to
+  isAlive: boolean
 }
 
 // Store all connected clients
@@ -20,6 +21,10 @@ const clients = new Map<string, WebSocketClient>()
 
 // WebSocket server instance
 let wss: WebSocketServer | null = null
+
+// Heartbeat interval handle
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+const HEARTBEAT_INTERVAL_MS = 30_000
 
 /**
  * Initialize WebSocket server
@@ -33,11 +38,15 @@ export function initWebSocket(server: any): WebSocketServer {
       id: clientId,
       ws,
       authenticated: false,
-      subscriptions: new Set()
+      subscriptions: new Set(),
+      isAlive: true
     }
 
     clients.set(clientId, client)
     console.log(`[WS] Client connected: ${clientId}`)
+
+    // Protocol-level heartbeat: mark alive on pong
+    ws.on('pong', () => { client.isAlive = true })
 
     // Handle messages from client
     ws.on('message', (data: Buffer) => {
@@ -61,6 +70,21 @@ export function initWebSocket(server: any): WebSocketServer {
       clients.delete(clientId)
     })
   })
+
+  // Start heartbeat interval to detect and close broken connections
+  heartbeatInterval = setInterval(() => {
+    wss?.clients.forEach((ws) => {
+      const client = Array.from(clients.values()).find(c => c.ws === ws)
+      if (client) {
+        if (!client.isAlive) {
+          clients.delete(client.id)
+          return ws.terminate()
+        }
+        client.isAlive = false
+        ws.ping()
+      }
+    })
+  }, HEARTBEAT_INTERVAL_MS)
 
   console.log('[WS] WebSocket server initialized')
   return wss
@@ -190,6 +214,10 @@ export function getAuthenticatedClientCount(): number {
  * Shutdown WebSocket server
  */
 export function shutdownWebSocket(): void {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+  }
   if (wss) {
     for (const client of Array.from(clients.values())) {
       client.ws.close()

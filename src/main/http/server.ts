@@ -219,6 +219,12 @@ export async function startHttpServer(
     })
   }
 
+  // Global error-handling middleware (must be after all routes)
+  expressApp.use((err: Error, _req: Request, res: Response, _next: Function) => {
+    console.error('[HTTP] Unhandled error:', err.stack || err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  })
+
   // Create HTTP server
   httpServer = createServer(expressApp)
 

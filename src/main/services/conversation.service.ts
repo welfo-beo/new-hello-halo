@@ -70,6 +70,7 @@ interface TokenUsage {
 interface ThoughtsSummary {
   count: number
   types: Partial<Record<ThoughtType, number>>
+  duration?: number
 }
 
 interface Message {

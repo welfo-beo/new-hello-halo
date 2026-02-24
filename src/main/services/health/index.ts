@@ -140,6 +140,9 @@ export {
   suppressAllDialogs
 } from './recovery-manager'
 
+// Recovery UI types (defined in recovery-manager/ui, re-exported here for convenience)
+export type { RecoveryDialogResult, RecoveryDialogOptions } from './recovery-manager/ui'
+
 // ============================================
 // Diagnostics
 // ============================================
@@ -181,8 +184,6 @@ export type {
   RecoveryStrategyId,
   RecoveryStrategy,
   RecoveryResult,
-  RecoveryDialogResult,
-  RecoveryDialogOptions,
 
   // Event types
   HealthEventCategory,
