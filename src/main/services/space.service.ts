@@ -79,6 +79,7 @@ interface SpaceIndexV3 {
 
 // Module-level registry: in-memory working copy of spaces-index.json
 let registry: Map<string, SpaceIndexEntry> | null = null
+let registryRoot: string | null = null
 
 function getSpaceIndexPath(): string {
   return join(getHaloDir(), 'spaces-index.json')
@@ -89,8 +90,11 @@ function getSpaceIndexPath(): string {
  * First call loads from disk and auto-migrates v1/v2 formats if needed.
  */
 function getRegistry(): Map<string, SpaceIndexEntry> {
-  if (!registry) {
+  const currentRoot = getHaloDir()
+
+  if (!registry || registryRoot !== currentRoot) {
     registry = loadSpaceIndex()
+    registryRoot = currentRoot
   }
   return registry
 }
@@ -204,6 +208,9 @@ function loadSpaceIndex(): Map<string, SpaceIndexEntry> {
  */
 function registerHaloTemp(map: Map<string, SpaceIndexEntry>): void {
   const tempPath = getTempSpacePath()
+  if (!existsSync(tempPath)) {
+    mkdirSync(tempPath, { recursive: true })
+  }
   const now = new Date().toISOString()
   map.set('halo-temp', {
     path: tempPath,

@@ -114,8 +114,10 @@ describe('Space Service', () => {
         customPath
       })
 
-      expect(space.path).toBe(customPath)
-      expect(fs.existsSync(path.join(customPath, '.halo', 'meta.json'))).toBe(true)
+      // Space data is centralized under ~/.halo/spaces/{id}; customPath is saved as workingDir.
+      expect(space.path.startsWith(getSpacesDir())).toBe(true)
+      expect(space.workingDir).toBe(customPath)
+      expect(fs.existsSync(path.join(space.path, '.halo', 'meta.json'))).toBe(true)
     })
   })
 
