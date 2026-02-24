@@ -80,6 +80,11 @@ interface SpaceIndexV3 {
 // Module-level registry: in-memory working copy of spaces-index.json
 let registry: Map<string, SpaceIndexEntry> | null = null
 
+/** Reset registry for testing — forces re-load from disk on next access. */
+export function _resetRegistryForTesting(): void {
+  registry = null
+}
+
 function getSpaceIndexPath(): string {
   return join(getHaloDir(), 'spaces-index.json')
 }

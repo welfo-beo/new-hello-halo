@@ -82,7 +82,7 @@ export function initializeExtendedServices(): void {
   initializeSearchHandlers()
 
   // Performance: Developer monitoring tools
-  registerPerfHandlers(mainWindow)
+  if (mainWindow) registerPerfHandlers(mainWindow)
 
   // GitBash: Windows Git Bash detection and setup
   registerGitBashHandlers()

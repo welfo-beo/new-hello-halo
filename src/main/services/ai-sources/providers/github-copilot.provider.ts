@@ -162,7 +162,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Check if GitHub Copilot is configured
    */
   isConfigured(config: AISourcesConfig): boolean {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     return !!(copilotConfig?.loggedIn && copilotConfig?.accessToken)
   }
 
@@ -170,7 +170,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Get backend configuration for API calls
    */
   getBackendConfig(config: AISourcesConfig): BackendRequestConfig | null {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     if (!copilotConfig?.loggedIn || !copilotConfig?.accessToken) {
       return null
     }
@@ -208,7 +208,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Get current model
    */
   getCurrentModel(config: AISourcesConfig): string | null {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     return copilotConfig?.model || null
   }
 
@@ -216,7 +216,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Get available models from Copilot API
    */
   async getAvailableModels(config: AISourcesConfig): Promise<string[]> {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     if (!copilotConfig?.accessToken) {
       return this.getDefaultModels()
     }
@@ -270,7 +270,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Get user info from config
    */
   getUserInfo(config: AISourcesConfig): AISourceUserInfo | null {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     return copilotConfig?.user || null
   }
 
@@ -513,7 +513,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * This is async and should be called from ensureValidToken
    */
   async ensureCopilotTokenCached(config: AISourcesConfig): Promise<boolean> {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     if (!copilotConfig?.accessToken) {
       return false
     }
@@ -532,7 +532,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Check token validity with config (called by manager)
    */
   checkTokenWithConfig(config: AISourcesConfig): { valid: boolean; expiresIn?: number; needsRefresh: boolean } {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     if (!copilotConfig?.accessToken) {
       return { valid: false, needsRefresh: false }
     }
@@ -553,7 +553,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
     refreshToken: string
     expiresAt: number
   }>> {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     if (!copilotConfig?.accessToken) {
       return { success: false, error: 'No token to refresh' }
     }
@@ -580,7 +580,7 @@ class GitHubCopilotProvider implements OAuthAISourceProvider {
    * Refresh config (fetch updated models)
    */
   async refreshConfig(config: AISourcesConfig): Promise<ProviderResult<Partial<AISourcesConfig>>> {
-    const copilotConfig = config['github-copilot'] as OAuthSourceConfig | undefined
+    const copilotConfig = (config as any)['github-copilot'] as OAuthSourceConfig | undefined
     if (!copilotConfig?.accessToken) {
       return { success: false, error: 'Not logged in' }
     }

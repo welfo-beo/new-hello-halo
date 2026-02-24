@@ -705,7 +705,7 @@ async function processMessageStream(
             })
 
             // Update session state thought
-            const thought = sessionState.thoughts.find(t => t.id === blockState.thoughtId)
+            const thought = sessionState.thoughts.find((t: Thought) => t.id === blockState.thoughtId)
             if (thought) {
               thought.content = blockState.content
               thought.isStreaming = false
@@ -738,7 +738,7 @@ async function processMessageStream(
             })
 
             // Update session state thought
-            const thought = sessionState.thoughts.find(t => t.id === blockState.thoughtId)
+            const thought = sessionState.thoughts.find((t: Thought) => t.id === blockState.thoughtId)
             if (thought) {
               thought.toolInput = toolInput
               thought.isStreaming = false
@@ -817,7 +817,7 @@ async function processMessageStream(
           }
 
           // Update backend session state
-          const toolUseThought = sessionState.thoughts.find(t => t.id === toolUseThoughtId)
+          const toolUseThought = sessionState.thoughts.find((t: Thought) => t.id === toolUseThoughtId)
           if (toolUseThought) {
             toolUseThought.toolResult = toolResult
           }
@@ -838,7 +838,7 @@ async function processMessageStream(
           })
 
           // Fire PostToolUse hook (fire-and-forget)
-          const toolUseName = sessionState.thoughts.find(t => t.id === toolUseThoughtId)?.toolName || ''
+          const toolUseName = sessionState.thoughts.find((t: Thought) => t.id === toolUseThoughtId)?.toolName || ''
           executeHooks('PostToolUse', toolUseName).catch(() => {})
 
           console.log(`[Agent][${conversationId}] Tool result merged into thought ${toolUseThoughtId}`)
@@ -1003,14 +1003,14 @@ async function processMessageStream(
   // Merge content: prefer lastTextContent (confirmed), fallback to currentStreamingText (accumulated)
   const finalContent = lastTextContent || currentStreamingText || ''
   const wasAborted = abortController.signal.aborted
-  const hasErrorThought = sessionState.thoughts.some(t => t.type === 'error')
+  const hasErrorThought = sessionState.thoughts.some((t: Thought) => t.type === 'error')
   // Two independent interrupt reasons: SDK reported error_during_execution, or stream ended unexpectedly
   const isInterrupted = !receivedResult || hadErrorDuringExecution
 
   // Step 1: Save content and/or error to disk
   // Persist when there's content OR an error thought (e.g., 429 rate limit)
   const errorThought = hasErrorThought
-    ? sessionState.thoughts.find(t => t.type === 'error')
+    ? sessionState.thoughts.find((t: Thought) => t.type === 'error')
     : undefined
   if (finalContent || hasErrorThought) {
     if (finalContent) {

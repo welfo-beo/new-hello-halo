@@ -10,9 +10,7 @@ import {
   generateToolCallId,
   encodeBackendConfig,
   decodeBackendConfig,
-  normalizeOpenAIChatCompletionsUrl,
-  normalizeOpenAIResponsesUrl,
-  normalizeAnthropicMessagesUrl,
+  normalizeApiUrl,
   safeJsonParse,
   deepClone,
   isNonEmptyString,
@@ -101,44 +99,39 @@ describe('Backend Config', () => {
 })
 
 describe('URL Normalization', () => {
-  describe('normalizeOpenAIChatCompletionsUrl', () => {
+  describe('normalizeApiUrl for OpenAI chat completions', () => {
     it('should add /v1/chat/completions to base URL', () => {
-      const result = normalizeOpenAIChatCompletionsUrl('https://api.openai.com')
+      const result = normalizeApiUrl('https://api.openai.com', 'openai')
       expect(result).toBe('https://api.openai.com/v1/chat/completions')
     })
 
     it('should handle URL with trailing slash', () => {
-      const result = normalizeOpenAIChatCompletionsUrl('https://api.openai.com/')
+      const result = normalizeApiUrl('https://api.openai.com/', 'openai')
       expect(result).toBe('https://api.openai.com/v1/chat/completions')
     })
 
     it('should not modify URL already ending with /chat/completions', () => {
-      const result = normalizeOpenAIChatCompletionsUrl('https://api.openai.com/v1/chat/completions')
+      const result = normalizeApiUrl('https://api.openai.com/v1/chat/completions', 'openai')
       expect(result).toBe('https://api.openai.com/v1/chat/completions')
     })
 
     it('should handle URL already ending with /v1', () => {
-      const result = normalizeOpenAIChatCompletionsUrl('https://api.openai.com/v1')
+      const result = normalizeApiUrl('https://api.openai.com/v1', 'openai')
       expect(result).toBe('https://api.openai.com/v1/chat/completions')
     })
   })
 
-  describe('normalizeOpenAIResponsesUrl', () => {
-    it('should add /v1/responses to base URL', () => {
-      const result = normalizeOpenAIResponsesUrl('https://api.openai.com')
-      expect(result).toBe('https://api.openai.com/v1/responses')
-    })
-
+  describe('normalizeApiUrl for OpenAI responses', () => {
     it('should not modify URL already ending with /responses', () => {
-      const result = normalizeOpenAIResponsesUrl('https://api.openai.com/v1/responses')
+      const result = normalizeApiUrl('https://api.openai.com/v1/responses', 'openai')
       expect(result).toBe('https://api.openai.com/v1/responses')
     })
   })
 
-  describe('normalizeAnthropicMessagesUrl', () => {
-    it('should add /v1/messages to base URL', () => {
-      const result = normalizeAnthropicMessagesUrl('https://api.anthropic.com')
-      expect(result).toBe('https://api.anthropic.com/v1/messages')
+  describe('normalizeApiUrl for Anthropic', () => {
+    it('should trim trailing slash from Anthropic URL', () => {
+      const result = normalizeApiUrl('https://api.anthropic.com/', 'anthropic')
+      expect(result).toBe('https://api.anthropic.com')
     })
   })
 })
