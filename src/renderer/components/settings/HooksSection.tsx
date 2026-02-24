@@ -11,6 +11,7 @@ export function HooksSection() {
   const { t } = useTranslation()
   const [hooks, setHooks] = useState<HooksConfig>({})
   const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   useEffect(() => {
     api.hooksGet().then(r => { if (r.success) setHooks(r.data as HooksConfig || {}) })
@@ -45,12 +46,16 @@ export function HooksSection() {
 
   const handleSave = async () => {
     setSaving(true)
+    setSaveMsg(null)
     try {
-      await api.hooksSet(hooks)
+      const r = await api.hooksSet(hooks)
+      setSaveMsg(r.success ? { ok: true, text: t('Saved') } : { ok: false, text: r.error || t('Save failed') })
     } catch (err) {
       console.error('[Hooks] Save failed:', err)
+      setSaveMsg({ ok: false, text: t('Save failed') })
     } finally {
       setSaving(false)
+      setTimeout(() => setSaveMsg(null), 3000)
     }
   }
 
@@ -91,13 +96,20 @@ export function HooksSection() {
           </div>
         ))}
       </div>
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm disabled:opacity-50"
-      >
-        {saving ? t('Saving...') : t('Save')}
-      </button>
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm disabled:opacity-50"
+        >
+          {saving ? t('Saving...') : t('Save')}
+        </button>
+        {saveMsg && (
+          <span className={`text-xs ${saveMsg.ok ? 'text-green-500' : 'text-destructive'}`}>
+            {saveMsg.text}
+          </span>
+        )}
+      </div>
     </section>
   )
 }

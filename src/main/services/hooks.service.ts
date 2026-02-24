@@ -17,10 +17,15 @@ export interface HookEntry {
 
 export type HooksConfig = Partial<Record<HookEvent, HookEntry[]>>
 
+const MAX_CACHE = 200
 const regexCache = new Map<string, RegExp | null>()
 
 function getMatcherRegex(pattern: string): RegExp | null {
   if (regexCache.has(pattern)) return regexCache.get(pattern)!
+  if (regexCache.size >= MAX_CACHE) {
+    const first = regexCache.keys().next().value
+    if (first !== undefined) regexCache.delete(first)
+  }
   try {
     const re = new RegExp(pattern)
     regexCache.set(pattern, re)
@@ -37,15 +42,25 @@ export function getHooksConfig(): HooksConfig {
   return config.hooks || {}
 }
 
+function killTree(pid: number): void {
+  try {
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/T', '/F', '/PID', String(pid)], { stdio: 'ignore' })
+    } else {
+      process.kill(-pid, 'SIGTERM')
+    }
+  } catch { /* already dead */ }
+}
+
 function runCommand(command: string, env: NodeJS.ProcessEnv, timeout: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const isWin = process.platform === 'win32'
     const child: ChildProcess = isWin
       ? spawn('cmd', ['/c', command], { env, stdio: 'ignore' })
-      : spawn('sh', ['-c', command], { env, stdio: 'ignore' })
+      : spawn('sh', ['-c', command], { env, stdio: 'ignore', detached: true })
 
     const timer = setTimeout(() => {
-      child.kill()
+      if (child.pid) killTree(child.pid)
       reject(new Error('Hook timeout'))
     }, timeout)
 
