@@ -1,7 +1,7 @@
 /**
  * Dev Mode Agent Definitions - OMC Integration
  *
- * Types and category mappings for oh-my-claudecode's 21 specialized agents.
+ * Types and category mappings for OMC agents.
  * Actual agent data (prompts, descriptions) is fetched via IPC from the main process.
  */
 
@@ -23,7 +23,8 @@ export interface ResolvedSubagent {
   name: string
   description: string
   prompt: string
-  model?: 'sonnet' | 'opus' | 'haiku'
+  tools?: string[]
+  model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
 }
 
 export interface ResolvedOmcAgents {
@@ -31,8 +32,8 @@ export interface ResolvedOmcAgents {
   unresolvedAgents: string[]
 }
 
-function normalizeModel(model?: string): 'sonnet' | 'opus' | 'haiku' | undefined {
-  if (model === 'sonnet' || model === 'opus' || model === 'haiku') return model
+function normalizeModel(model?: string): 'sonnet' | 'opus' | 'haiku' | 'inherit' | undefined {
+  if (model === 'sonnet' || model === 'opus' || model === 'haiku' || model === 'inherit') return model
   return undefined
 }
 
@@ -58,11 +59,45 @@ export function resolveSelectedOmcAgents(
       name,
       description: def.description,
       prompt: def.prompt,
+      tools: def.tools,
       model: normalizeModel(def.model)
     })
   }
 
   return { resolvedSubagents, unresolvedAgents }
+}
+
+/** Full OMC agent -> category mapping (canonical + aliases). */
+export const OMC_AGENT_CATEGORY_MAP: Record<string, string> = {
+  explore: 'build',
+  analyst: 'build',
+  planner: 'build',
+  architect: 'build',
+  debugger: 'build',
+  executor: 'build',
+  verifier: 'build',
+
+  'quality-reviewer': 'review',
+  'security-reviewer': 'review',
+  'code-reviewer': 'review',
+  'api-reviewer': 'review',
+  'performance-reviewer': 'review',
+
+  'deep-executor': 'specialist',
+  'test-engineer': 'specialist',
+  'build-fixer': 'specialist',
+  designer: 'specialist',
+  writer: 'specialist',
+  'qa-tester': 'specialist',
+  scientist: 'specialist',
+  'git-master': 'specialist',
+  'code-simplifier': 'specialist',
+  'document-specialist': 'specialist',
+  'dependency-expert': 'specialist',
+  researcher: 'specialist',
+  'tdd-guide': 'specialist',
+
+  critic: 'coordination'
 }
 
 /** OMC agent categories for UI grouping */

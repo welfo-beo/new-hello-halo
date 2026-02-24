@@ -374,6 +374,12 @@ export const api = {
       tools?: string[]
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
     }>
+    orchestration?: {
+      provider: 'omc'
+      mode: 'session'
+      workflowMode: 'autopilot' | 'ralph' | 'custom'
+      selectedAgents: string[]
+    }
     canvasContext?: {
       isOpen: boolean
       tabCount: number

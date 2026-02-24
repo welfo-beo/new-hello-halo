@@ -46,4 +46,26 @@ describe('resolveSelectedOmcAgents', () => {
     expect(result.resolvedSubagents).toHaveLength(3)
     expect(result.resolvedSubagents.map(a => a.name)).toEqual(['analyst', 'planner', 'executor'])
   })
+
+  it('preserves tools and supports inherit model', () => {
+    const selected = new Set(['executor'])
+    const defs = {
+      executor: {
+        description: 'Executes tasks',
+        prompt: 'Do work',
+        tools: ['Read', 'Edit'],
+        model: 'inherit'
+      }
+    }
+
+    const result = resolveSelectedOmcAgents(selected, defs)
+    expect(result.unresolvedAgents).toEqual([])
+    expect(result.resolvedSubagents).toEqual([{
+      name: 'executor',
+      description: 'Executes tasks',
+      prompt: 'Do work',
+      tools: ['Read', 'Edit'],
+      model: 'inherit'
+    }])
+  })
 })

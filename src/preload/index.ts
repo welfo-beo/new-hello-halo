@@ -104,8 +104,15 @@ export interface HaloAPI {
       prompt: string
       tools?: string[]
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+      skills?: string[]
     }>
     autoGenerateSubagents?: boolean
+    orchestration?: {
+      provider: 'omc'
+      mode: 'session'
+      workflowMode: 'autopilot' | 'ralph' | 'custom'
+      selectedAgents: string[]
+    }
     canvasContext?: {  // Canvas context for AI awareness
       isOpen: boolean
       tabCount: number

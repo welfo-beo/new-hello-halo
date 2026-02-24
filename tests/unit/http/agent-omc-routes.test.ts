@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { registerApiRoutes } from '../../../src/main/http/routes/index'
 
 const mockedAgentController = vi.hoisted(() => ({
   sendMessage: vi.fn(),
@@ -17,6 +16,14 @@ const mockedAgentController = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../src/main/controllers/agent.controller', () => mockedAgentController)
+vi.mock('../../../src/main/services/artifact.service', () => ({
+  listArtifacts: vi.fn(async () => []),
+  listArtifactsTree: vi.fn(async () => []),
+  loadTreeChildren: vi.fn(async () => []),
+  readArtifactContent: vi.fn(() => ({ content: '', fileType: 'text' })),
+  saveArtifactContent: vi.fn(),
+  detectFileType: vi.fn(() => ({ fileType: 'text', canPreview: true }))
+}))
 
 type RouteHandler = (req: any, res: any) => unknown | Promise<unknown>
 type Method = 'get' | 'post' | 'put' | 'delete'
@@ -52,7 +59,8 @@ describe('HTTP OMC agent routes', () => {
     vi.clearAllMocks()
   })
 
-  it('should register OMC GET endpoints', () => {
+  it('should register OMC GET endpoints', async () => {
+    const { registerApiRoutes } = await import('../../../src/main/http/routes/index')
     const { app, handlers } = createMockApp()
     registerApiRoutes(app, null)
 
@@ -62,6 +70,7 @@ describe('HTTP OMC agent routes', () => {
   })
 
   it('should return success=true for OMC endpoints', async () => {
+    const { registerApiRoutes } = await import('../../../src/main/http/routes/index')
     const { app, handlers } = createMockApp()
     registerApiRoutes(app, null)
 

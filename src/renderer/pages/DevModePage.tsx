@@ -15,47 +15,39 @@ import { OMC_CATEGORIES, CATEGORY_ORDER, resolveSelectedOmcAgents } from './dev-
 import type { OmcAgentInfo, OmcAgentDef } from './dev-mode-agents'
 
 type LoadState = 'loading' | 'ready' | 'error'
+type OmcWorkflowMode = 'autopilot' | 'ralph' | 'custom'
 
-// OMC workflow templates using OMC native agent names
-const WORKFLOW_TEMPLATES = [
+// OMC mode templates (session-first orchestration)
+const MODE_TEMPLATES: Array<{
+  id: OmcWorkflowMode
+  label: string
+  description: string
+  icon: typeof Zap
+  keywordPrefix?: string
+  defaultAgents: string[]
+}> = [
   {
-    id: 'new-feature',
-    label: 'New Feature',
+    id: 'autopilot',
+    label: 'Autopilot',
+    description: 'Autonomous delivery mode for end-to-end implementation.',
     icon: Zap,
-    rounds: [
-      { agents: ['analyst', 'planner'], desc: 'Analyze + plan', parallel: true },
-      { agents: ['executor', 'designer'], desc: 'Parallel implementation', parallel: true },
-      { agents: ['code-reviewer'], desc: 'Review changes' }
-    ]
+    keywordPrefix: 'autopilot:',
+    defaultAgents: ['analyst', 'planner', 'executor', 'verifier']
   },
   {
-    id: 'bug-fix',
-    label: 'Bug Fix',
+    id: 'ralph',
+    label: 'Ralph',
+    description: 'Persistent execution mode that keeps iterating until complete.',
     icon: GitBranch,
-    rounds: [
-      { agents: ['debugger', 'explore'], desc: 'Investigate root cause', parallel: true },
-      { agents: ['executor'], desc: 'Implement fix' },
-      { agents: ['verifier'], desc: 'Verify fix' }
-    ]
+    keywordPrefix: 'ralph:',
+    defaultAgents: ['planner', 'executor', 'verifier', 'critic']
   },
   {
-    id: 'code-review',
-    label: 'Code Review',
+    id: 'custom',
+    label: 'Custom',
+    description: 'Manual orchestration with your own prompt and selected agents.',
     icon: Users,
-    rounds: [
-      { agents: ['code-reviewer', 'security-reviewer', 'quality-reviewer'], desc: 'Parallel review', parallel: true },
-      { agents: ['critic'], desc: 'Synthesize report' }
-    ]
-  },
-  {
-    id: 'refactor',
-    label: 'Refactoring',
-    icon: GitBranch,
-    rounds: [
-      { agents: ['architect'], desc: 'Assess architecture' },
-      { agents: ['code-simplifier'], desc: 'Execute changes' },
-      { agents: ['verifier'], desc: 'Validate' }
-    ]
+    defaultAgents: []
   }
 ]
 
@@ -64,8 +56,8 @@ export function DevModePage() {
   const { goBack } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(CATEGORY_ORDER))
-  const [selectedAgents, setSelectedAgents] = useState<Set<string>>(new Set())
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null)
+  const [selectedAgents, setSelectedAgents] = useState<Set<string>>(new Set(MODE_TEMPLATES.find(m => m.id === 'autopilot')?.defaultAgents || []))
+  const [selectedWorkflow, setSelectedWorkflow] = useState<OmcWorkflowMode>('autopilot')
   const [taskDescription, setTaskDescription] = useState('')
   const [isExecuting, setIsExecuting] = useState(false)
   const [executeError, setExecuteError] = useState<string | null>(null)
@@ -159,17 +151,20 @@ export function DevModePage() {
 
     setIsExecuting(true)
     try {
-      // 1. Build orchestration prompt (task + workflow rounds)
-      const wf = selectedWorkflow ? WORKFLOW_TEMPLATES.find(w => w.id === selectedWorkflow) : null
-      let prompt = taskDescription
-      if (wf) {
-        const rounds = wf.rounds.map((r, i) =>
-          `Round ${i + 1}${r.parallel ? ' (parallel)' : ''}: ${r.agents.length > 0 ? r.agents.join(' + ') : 'synthesize'} - ${r.desc}`
-        ).join('\n')
-        prompt += `\n\n<workflow>\n${rounds}\n</workflow>`
+      // 1. Build message for OMC session-first orchestration
+      const modeTemplate = MODE_TEMPLATES.find(w => w.id === selectedWorkflow)
+      const taskInput = taskDescription.trim()
+      let prompt = taskInput
+
+      if (modeTemplate?.keywordPrefix) {
+        const prefix = modeTemplate.keywordPrefix.toLowerCase()
+        if (!taskInput.toLowerCase().startsWith(prefix)) {
+          prompt = `${modeTemplate.keywordPrefix} ${taskInput}`
+        }
       }
-      prompt += `\n\n<available-agents>\n${resolution.resolvedSubagents.map(a => `- ${a.name}: ${a.description}`).join('\n')}\n</available-agents>`
-      prompt += '\n\nDelegate aggressively to the available agents. Parallelize independent tasks. Verify all work before completing.'
+
+      prompt += `\n\n<selected-agents>\n${resolution.resolvedSubagents.map(a => `- ${a.name}: ${a.description}`).join('\n')}\n</selected-agents>`
+      prompt += `\n\n<orchestration-mode>${selectedWorkflow}</orchestration-mode>`
 
       // 2. Create conversation and send
       const spaceId = currentSpace.id
@@ -182,6 +177,12 @@ export function DevModePage() {
         conversationId: conversation.id,
         message: prompt,
         subagents: resolution.resolvedSubagents,
+        orchestration: {
+          provider: 'omc',
+          mode: 'session',
+          workflowMode: selectedWorkflow,
+          selectedAgents: Array.from(selectedAgents)
+        },
         effort: 'high'
       })
 
@@ -248,13 +249,13 @@ export function DevModePage() {
     })
   }
 
-  const applyWorkflow = (workflowId: string) => {
+  const applyWorkflow = (workflowId: OmcWorkflowMode) => {
     setExecuteError(null)
     setSelectedWorkflow(workflowId)
-    const wf = WORKFLOW_TEMPLATES.find(w => w.id === workflowId)
-    if (wf) {
+    const wf = MODE_TEMPLATES.find(w => w.id === workflowId)
+    if (wf && wf.defaultAgents.length > 0) {
       const agents = new Set<string>()
-      wf.rounds.forEach(r => r.agents.forEach(a => agents.add(a)))
+      wf.defaultAgents.forEach(a => agents.add(a))
       setSelectedAgents(agents)
     }
   }
@@ -349,11 +350,11 @@ export function DevModePage() {
 
         {/* Right: Task & Workflow */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Workflow Templates */}
+          {/* Mode Templates */}
           <div className="p-4 border-b border-border">
-            <div className="text-xs font-medium text-muted-foreground mb-2">{t('Workflow Templates')}</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">{t('Orchestration Mode')}</div>
             <div className="flex flex-wrap gap-2">
-              {WORKFLOW_TEMPLATES.map(wf => {
+              {MODE_TEMPLATES.map(wf => {
                 const Icon = wf.icon
                 return (
                   <button
@@ -373,23 +374,14 @@ export function DevModePage() {
             </div>
           </div>
 
-          {/* Workflow Detail */}
+          {/* Mode Detail */}
           {selectedWorkflow && (
             <div className="px-4 py-3 border-b border-border bg-muted/30">
               <div className="text-xs font-medium text-foreground mb-2">
-                {t(WORKFLOW_TEMPLATES.find(w => w.id === selectedWorkflow)?.label || '')}
+                {t(MODE_TEMPLATES.find(w => w.id === selectedWorkflow)?.label || '')}
               </div>
-              <div className="space-y-1.5">
-                {WORKFLOW_TEMPLATES.find(w => w.id === selectedWorkflow)?.rounds.map((round, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="text-muted-foreground w-14 flex-shrink-0">
-                      Round {i + 1}{round.parallel ? ' ||' : ''}
-                    </span>
-                    <span className="text-foreground/80">
-                      {round.agents.length > 0 ? round.agents.join(' + ') : '-'} - {round.desc}
-                    </span>
-                  </div>
-                ))}
+              <div className="text-xs text-foreground/80">
+                {t(MODE_TEMPLATES.find(w => w.id === selectedWorkflow)?.description || '')}
               </div>
             </div>
           )}
