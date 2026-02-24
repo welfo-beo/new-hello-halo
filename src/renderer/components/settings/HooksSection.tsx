@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../../api'
+import { useTranslation } from '../../i18n'
 import type { HooksConfig, HookEntry } from '../../types'
 
 const EVENTS = ['PreToolUse', 'PostToolUse', 'Stop', 'Notification', 'SubagentStop'] as const
 type HookEvent = typeof EVENTS[number]
 
 export function HooksSection() {
+  const { t } = useTranslation()
   const [hooks, setHooks] = useState<HooksConfig>({})
   const [saving, setSaving] = useState(false)
 
@@ -43,15 +45,20 @@ export function HooksSection() {
 
   const handleSave = async () => {
     setSaving(true)
-    await api.hooksSet(hooks)
-    setSaving(false)
+    try {
+      await api.hooksSet(hooks)
+    } catch (err) {
+      console.error('[Hooks] Save failed:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <section id="hooks" className="bg-card rounded-xl border border-border p-6">
-      <h2 className="text-lg font-medium mb-4">Hooks</h2>
+      <h2 className="text-lg font-medium mb-4">{t('Hooks')}</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Shell commands executed on agent tool events.
+        {t('Shell commands executed on agent tool events.')}
       </p>
       <div className="space-y-4">
         {EVENTS.map(event => (
@@ -67,13 +74,13 @@ export function HooksSection() {
                 <input
                   value={entry.matcher}
                   onChange={e => updateEntry(event, idx, 'matcher', e.target.value)}
-                  placeholder="Tool matcher (regex)"
+                  placeholder={t('Tool matcher (regex)')}
                   className="w-32 px-2 py-1 text-xs border border-border rounded bg-background"
                 />
                 <input
                   value={entry.hooks[0]?.command || ''}
                   onChange={e => updateEntry(event, idx, 'command', e.target.value)}
-                  placeholder="Shell command"
+                  placeholder={t('Shell command')}
                   className="flex-1 px-2 py-1 text-xs border border-border rounded bg-background"
                 />
                 <button onClick={() => removeEntry(event, idx)} className="p-1 hover:bg-secondary rounded text-destructive">
@@ -89,7 +96,7 @@ export function HooksSection() {
         disabled={saving}
         className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm disabled:opacity-50"
       >
-        {saving ? 'Saving...' : 'Save'}
+        {saving ? t('Saving...') : t('Save')}
       </button>
     </section>
   )

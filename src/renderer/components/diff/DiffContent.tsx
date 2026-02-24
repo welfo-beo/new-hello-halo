@@ -9,7 +9,7 @@
  * - Support for multiple edit chunks (when same file edited multiple times)
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer-continued'
 import { ChevronDown, Columns2, AlignJustify } from 'lucide-react'
 import type { EditChunk } from './utils'
@@ -100,13 +100,20 @@ const customStyles = {
   },
 }
 
-// Detect if dark mode is active
+// Detect if dark mode is active (reactive to theme changes)
 function useIsDarkMode(): boolean {
-  // Check if html element has 'light' class (our theme system uses dark as default)
-  if (typeof document !== 'undefined') {
-    return !document.documentElement.classList.contains('light')
-  }
-  return true
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' ? !document.documentElement.classList.contains('light') : true
+  )
+  useEffect(() => {
+    const el = document.documentElement
+    const observer = new MutationObserver(() => {
+      setIsDark(!el.classList.contains('light'))
+    })
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+  return isDark
 }
 
 // Single diff chunk component
@@ -176,12 +183,12 @@ export function DiffContent({
 
     const oldLines = (oldString || '').split('\n')
     const newLines = (newString || '').split('\n')
-
-    // Simple line count (the diff viewer shows actual changes)
-    return {
-      added: Math.max(0, newLines.length - oldLines.length + 1),
-      removed: Math.max(0, oldLines.length - newLines.length + 1)
-    }
+    const oldSet = new Set(oldLines)
+    const newSet = new Set(newLines)
+    let added = 0, removed = 0
+    for (const line of newLines) if (!oldSet.has(line)) added++
+    for (const line of oldLines) if (!newSet.has(line)) removed++
+    return { added, removed }
   }, [type, content, oldString, newString])
 
   return (

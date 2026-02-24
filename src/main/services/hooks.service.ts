@@ -1,8 +1,5 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { spawn, type ChildProcess } from 'child_process'
 import { getConfig } from './config.service'
-
-const execAsync = promisify(exec)
 
 export type HookEvent = 'PreToolUse' | 'PostToolUse' | 'Stop' | 'Notification' | 'SubagentStop'
 export type HookType = 'command'
@@ -20,9 +17,47 @@ export interface HookEntry {
 
 export type HooksConfig = Partial<Record<HookEvent, HookEntry[]>>
 
+const regexCache = new Map<string, RegExp | null>()
+
+function getMatcherRegex(pattern: string): RegExp | null {
+  if (regexCache.has(pattern)) return regexCache.get(pattern)!
+  try {
+    const re = new RegExp(pattern)
+    regexCache.set(pattern, re)
+    return re
+  } catch {
+    console.warn(`[Hooks] Invalid regex pattern: ${pattern}`)
+    regexCache.set(pattern, null)
+    return null
+  }
+}
+
 export function getHooksConfig(): HooksConfig {
-  const config = getConfig() as any
+  const config = getConfig()
   return config.hooks || {}
+}
+
+function runCommand(command: string, env: NodeJS.ProcessEnv, timeout: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const isWin = process.platform === 'win32'
+    const child: ChildProcess = isWin
+      ? spawn('cmd', ['/c', command], { env, stdio: 'ignore' })
+      : spawn('sh', ['-c', command], { env, stdio: 'ignore' })
+
+    const timer = setTimeout(() => {
+      child.kill()
+      reject(new Error('Hook timeout'))
+    }, timeout)
+
+    child.on('close', (code) => {
+      clearTimeout(timer)
+      code === 0 ? resolve() : reject(new Error(`Hook exited with code ${code}`))
+    })
+    child.on('error', (err) => {
+      clearTimeout(timer)
+      reject(err)
+    })
+  })
 }
 
 export async function executeHooks(
@@ -34,8 +69,8 @@ export async function executeHooks(
   const entries = hooksConfig[event] || []
 
   for (const entry of entries) {
-    const regex = new RegExp(entry.matcher)
-    if (!regex.test(toolName)) continue
+    const regex = getMatcherRegex(entry.matcher)
+    if (!regex || !regex.test(toolName)) continue
 
     for (const hook of entry.hooks) {
       if (hook.type === 'command') {
@@ -46,12 +81,7 @@ export async function executeHooks(
             HALO_TOOL_NAME: toolName,
             HALO_TOOL_INPUT: JSON.stringify(toolInput || {})
           }
-          await Promise.race([
-            execAsync(hook.command, { env }),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('Hook timeout')), timeout)
-            )
-          ])
+          await runCommand(hook.command, env, timeout)
         } catch (err) {
           console.warn(`[Hooks] ${event} hook failed for ${toolName}:`, err)
         }

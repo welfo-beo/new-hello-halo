@@ -29,17 +29,17 @@ export function JsonViewer({ tab, onScrollChange }: JsonViewerProps) {
 
   const content = tab.content || ''
 
-  // Format or minify JSON
-  const displayContent = useMemo(() => {
-    if (!content) return ''
+  // Format or minify JSON (also determines validity)
+  const { displayContent, isValidJson } = useMemo(() => {
+    if (!content) return { displayContent: '', isValidJson: false }
     try {
       const parsed = JSON.parse(content)
-      return isFormatted
-        ? JSON.stringify(parsed, null, 2)
-        : JSON.stringify(parsed)
+      return {
+        displayContent: isFormatted ? JSON.stringify(parsed, null, 2) : JSON.stringify(parsed),
+        isValidJson: true
+      }
     } catch {
-      // If invalid JSON, just show as-is
-      return content
+      return { displayContent: content, isValidJson: false }
     }
   }, [content, isFormatted])
 
@@ -89,16 +89,6 @@ export function JsonViewer({ tab, onScrollChange }: JsonViewerProps) {
   const lines = displayContent.split('\n')
   const lineCount = lines.length
   const canOpenExternal = !api.isRemoteMode() && tab.path
-
-  // Check if JSON is valid
-  const isValidJson = useMemo(() => {
-    try {
-      JSON.parse(content)
-      return true
-    } catch {
-      return false
-    }
-  }, [content])
 
   return (
     <div className="relative flex flex-col h-full bg-background">

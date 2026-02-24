@@ -9,7 +9,7 @@
  * - Compact mode (isCompact=true): Sidebar-style when Canvas is open
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useSpaceStore } from '../../stores/space.store'
 import { useChatStore } from '../../stores/chat.store'
 import { useOnboardingStore } from '../../stores/onboarding.store'
@@ -61,10 +61,13 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
   const [mockUserMessage, setMockUserMessage] = useState<string | null>(null)
   const [mockAiResponse, setMockAiResponse] = useState<string | null>(null)
   const [mockStreamingContent, setMockStreamingContent] = useState<string>('')
+  const onboardingAbortRef = useRef<AbortController | null>(null)
 
-  // Clear mock state when onboarding completes
+  // Clear mock state and abort animation when onboarding completes
   useEffect(() => {
     if (!isOnboarding) {
+      onboardingAbortRef.current?.abort()
+      onboardingAbortRef.current = null
       setMockUserMessage(null)
       setMockAiResponse(null)
       setMockStreamingContent('')
@@ -111,48 +114,48 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
       // Scroll to the message via Virtuoso
       messageListRef.current?.scrollToIndex(messageIndex, 'smooth')
 
-      // Wait for Virtuoso to render the item, then apply DOM highlighting
-      const applyHighlight = (retries = 0) => {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`)
-        if (!messageElement) {
-          if (retries < 10) {
-            setTimeout(() => applyHighlight(retries + 1), 100)
-          } else {
-            console.warn(`[ChatView] Message element not found after scrollToIndex for ID: ${messageId}`)
+      const highlightElement = (el: Element, q: string) => {
+        el.classList.add('search-highlight')
+        setTimeout(() => el.classList.remove('search-highlight'), 2000)
+        const contentEl = el.querySelector('[data-message-content]')
+        if (!contentEl || !q || contentEl.querySelector('.search-term-highlight')) return
+        try {
+          const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+          const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT)
+          const textNodes: Text[] = []
+          while (walker.nextNode()) textNodes.push(walker.currentNode as Text)
+          for (const node of textNodes) {
+            const parts = node.textContent?.split(regex)
+            if (!parts || parts.length <= 1) continue
+            const matches = node.textContent?.match(regex) || []
+            const frag = document.createDocumentFragment()
+            parts.forEach((part, i) => {
+              if (part) frag.appendChild(document.createTextNode(part))
+              if (i < matches.length) {
+                const mark = document.createElement('mark')
+                mark.className = 'search-term-highlight bg-yellow-400/30 font-semibold rounded px-0.5'
+                mark.textContent = matches[i]
+                frag.appendChild(mark)
+              }
+            })
+            node.parentNode?.replaceChild(frag, node)
           }
-          return
-        }
-
-        console.log(`[ChatView] Found message element, highlighting`)
-
-        // Add highlight animation
-        messageElement.classList.add('search-highlight')
-        setTimeout(() => {
-          messageElement.classList.remove('search-highlight')
-        }, 2000)
-
-        // Highlight search terms in the message (simple text highlight)
-        const contentElement = messageElement.querySelector('[data-message-content]')
-        if (contentElement && query) {
-          try {
-            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-            const originalHTML = contentElement.innerHTML
-
-            if (!originalHTML.includes('search-term-highlight')) {
-              contentElement.innerHTML = originalHTML.replace(
-                regex,
-                '<mark class="search-term-highlight bg-yellow-400/30 font-semibold rounded px-0.5">$1</mark>'
-              )
-              console.log(`[ChatView] Highlighted search term: "${query}"`)
-            }
-          } catch (error) {
-            console.error(`[ChatView] Error highlighting search term:`, error)
-          }
+        } catch (error) {
+          console.error(`[ChatView] Error highlighting search term:`, error)
         }
       }
 
-      // Small delay to allow Virtuoso to scroll and render
-      setTimeout(() => applyHighlight(), 150)
+      // Use MutationObserver instead of polling to wait for element
+      setTimeout(() => {
+        const el = document.querySelector(`[data-message-id="${messageId}"]`)
+        if (el) { highlightElement(el, query); return }
+        const observer = new MutationObserver((_mutations, obs) => {
+          const found = document.querySelector(`[data-message-id="${messageId}"]`)
+          if (found) { obs.disconnect(); highlightElement(found, query) }
+        })
+        observer.observe(document.body, { childList: true, subtree: true })
+        setTimeout(() => observer.disconnect(), 3000)
+      }, 150)
     }
 
     // Clear all search highlights when requested
@@ -185,52 +188,49 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
   const onboardingResponse = getOnboardingAiResponse(t)
   const onboardingHtml = getOnboardingHtmlArtifact(t)
 
-  // Handle mock onboarding send
+  // Handle mock onboarding send with abort support
   const handleOnboardingSend = useCallback(async () => {
-    if (!currentSpace) return
+    if (!currentSpace || onboardingAbortRef.current) return // double-trigger guard
 
-    // Step 1: Show user message immediately
-    setMockUserMessage(onboardingPrompt)
+    const abort = new AbortController()
+    onboardingAbortRef.current = abort
+    const wait = (ms: number) => new Promise<void>((resolve, reject) => {
+      const id = setTimeout(resolve, ms)
+      abort.signal.addEventListener('abort', () => { clearTimeout(id); reject(new DOMException('Aborted', 'AbortError')) })
+    })
 
-    // Step 2: Start "thinking" phase (2.5 seconds) - no spotlight during this time
-    setMockThinking(true)
-    setMockAnimating(true)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    setMockThinking(false)
-
-    // Step 3: Stream mock AI response
-    const response = onboardingResponse
-    for (let i = 0; i <= response.length; i++) {
-      setMockStreamingContent(response.slice(0, i))
-      await new Promise(resolve => setTimeout(resolve, 15))
-    }
-
-    // Step 4: Complete response
-    setMockAiResponse(response)
-    setMockStreamingContent('')
-
-    // Step 5: Write the actual HTML file to disk BEFORE stopping animation
-    // This ensures the file exists when ArtifactRail tries to load it
     try {
-      await api.writeOnboardingArtifact(
-        currentSpace.id,
-        ONBOARDING_ARTIFACT_NAME,
-        onboardingHtml
-      )
+      setMockUserMessage(onboardingPrompt)
+      setMockThinking(true)
+      setMockAnimating(true)
 
-      // Also save the conversation to disk
+      await wait(2000)
+      setMockThinking(false)
+
+      // Stream mock AI response
+      const response = onboardingResponse
+      for (let i = 0; i <= response.length; i++) {
+        if (abort.signal.aborted) return
+        setMockStreamingContent(response.slice(0, i))
+        await wait(15)
+      }
+
+      setMockAiResponse(response)
+      setMockStreamingContent('')
+
+      // Write artifact to disk before stopping animation
+      await api.writeOnboardingArtifact(currentSpace.id, ONBOARDING_ARTIFACT_NAME, onboardingHtml)
       await api.saveOnboardingConversation(currentSpace.id, onboardingPrompt, onboardingResponse)
+      await wait(200)
 
-      // Small delay to ensure file system has synced
-      await new Promise(resolve => setTimeout(resolve, 200))
+      setMockAnimating(false)
     } catch (err) {
-      console.error('Failed to write onboarding artifact:', err)
+      if ((err as Error).name === 'AbortError') return // cancelled by skip
+      console.error('Failed onboarding animation:', err)
+      setMockAnimating(false)
+    } finally {
+      if (onboardingAbortRef.current === abort) onboardingAbortRef.current = null
     }
-
-    // Step 6: Animation done
-    // Note: Don't call nextStep() here - it's already called by Spotlight's handleHoleClick
-    // We just need to stop the animation so the Spotlight can show the artifact
-    setMockAnimating(false)
   }, [currentSpace, onboardingHtml, onboardingPrompt, onboardingResponse, setMockAnimating, setMockThinking])
 
   // AI Browser state
@@ -238,19 +238,15 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
   const clearWorkspace = useWorkspaceStore(s => s.clear)
 
   // Handle send (with optional images, thinking mode, effort level)
-  const handleSend = async (content: string, images?: ImageAttachment[], thinkingMode?: string, effort?: string) => {
-    // In onboarding mode, intercept and play mock response
+  const handleSend = useCallback(async (content: string, images?: ImageAttachment[], thinkingMode?: string, effort?: string) => {
     if (isOnboarding && currentStep === 'send-message') {
       handleOnboardingSend()
       return
     }
-
-    // Can send if has text OR has images
     if ((!content.trim() && (!images || images.length === 0)) || isGenerating) return
-
     clearWorkspace()
     await sendMessage(content, images, aiBrowserEnabled, thinkingMode as any, effort as any)
-  }
+  }, [isOnboarding, currentStep, handleOnboardingSend, isGenerating, clearWorkspace, sendMessage, aiBrowserEnabled])
 
   // Handle stop - stops the current conversation's generation
   const handleStop = async () => {
@@ -261,7 +257,7 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
 
   // Combine real messages with mock onboarding messages
   const realMessages = currentConversation?.messages || []
-  const displayMessages = mockUserMessage
+  const displayMessages = useMemo(() => mockUserMessage
     ? [
         ...realMessages,
         { id: 'onboarding-user', role: 'user' as const, content: mockUserMessage, timestamp: new Date().toISOString() },
@@ -270,6 +266,7 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
           : [])
       ]
     : realMessages
+  , [realMessages, mockUserMessage, mockAiResponse])
 
   // Keep displayMessagesRef in sync for search navigation
   displayMessagesRef.current = displayMessages

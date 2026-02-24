@@ -11,6 +11,7 @@ import { initPerfStoreListeners } from './stores/perf.store'
 import { useSpaceStore } from './stores/space.store'
 import { useSearchStore } from './stores/search.store'
 import { SplashScreen } from './components/splash/SplashScreen'
+import { SectionErrorBoundary } from './components/ErrorBoundary'
 import { SetupFlow } from './components/setup/SetupFlow'
 import { GitBashSetup } from './components/setup/GitBashSetup'
 import { SearchPanel } from './components/search/SearchPanel'
@@ -27,6 +28,7 @@ import { useWorkspaceStore } from './stores/agent-workspace.store'
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
 const SpacePage = lazy(() => import('./pages/SpacePage').then(m => ({ default: m.SpacePage })))
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
+const DevModePage = lazy(() => import('./pages/DevModePage').then(m => ({ default: m.DevModePage })))
 
 // Page loading fallback - minimal spinner that matches app style
 function PageLoader() {
@@ -471,19 +473,25 @@ export default function App() {
       case 'home':
         return (
           <Suspense fallback={<PageLoader />}>
-            <HomePage />
+            <SectionErrorBoundary><HomePage /></SectionErrorBoundary>
           </Suspense>
         )
       case 'space':
         return (
           <Suspense fallback={<PageLoader />}>
-            <SpacePage />
+            <SectionErrorBoundary><SpacePage /></SectionErrorBoundary>
           </Suspense>
         )
       case 'settings':
         return (
           <Suspense fallback={<PageLoader />}>
-            <SettingsPage />
+            <SectionErrorBoundary><SettingsPage /></SectionErrorBoundary>
+          </Suspense>
+        )
+      case 'devMode':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <SectionErrorBoundary><DevModePage /></SectionErrorBoundary>
           </Suspense>
         )
       default:

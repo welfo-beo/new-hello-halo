@@ -343,6 +343,8 @@ interface HaloConfig {
     sidebarWidth?: number
     artifactRailWidth?: number
   }
+  // Hooks configuration
+  hooks?: import('./hooks.service').HooksConfig
   // Git Bash configuration (Windows only)
   gitBash?: {
     installed: boolean

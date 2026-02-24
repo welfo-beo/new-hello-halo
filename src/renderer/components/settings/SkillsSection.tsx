@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { api } from '../../api'
+import { useTranslation } from '../../i18n'
 
 interface SkillDef {
   name: string
@@ -11,6 +12,7 @@ interface SkillDef {
 }
 
 export function SkillsSection({ spaceDir }: { spaceDir?: string }) {
+  const { t } = useTranslation()
   const [skills, setSkills] = useState<SkillDef[]>([])
   const [selected, setSelected] = useState<SkillDef | null>(null)
   const [editContent, setEditContent] = useState('')
@@ -38,9 +40,13 @@ export function SkillsSection({ spaceDir }: { spaceDir?: string }) {
   }
 
   const handleSave = async () => {
-    await api.skillsSave(editName, editContent, 'global', spaceDir)
-    load()
-    setCreating(false)
+    try {
+      await api.skillsSave(editName, editContent, 'global', spaceDir)
+      load()
+      setCreating(false)
+    } catch (err) {
+      console.error('[Skills] Save failed:', err)
+    }
   }
 
   const handleUpload = () => {
@@ -62,22 +68,26 @@ export function SkillsSection({ spaceDir }: { spaceDir?: string }) {
   }
 
   const handleDelete = async (skill: SkillDef) => {
-    await api.skillsDelete(skill.filePath)
-    load()
-    if (selected?.filePath === skill.filePath) { setSelected(null); setCreating(false) }
+    try {
+      await api.skillsDelete(skill.filePath)
+      load()
+      if (selected?.filePath === skill.filePath) { setSelected(null); setCreating(false) }
+    } catch (err) {
+      console.error('[Skills] Delete failed:', err)
+    }
   }
 
   return (
     <section id="skills" className="bg-card rounded-xl border border-border p-6">
-      <h2 className="text-lg font-medium mb-4">Skills</h2>
+      <h2 className="text-lg font-medium mb-4">{t('Skills')}</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Custom slash commands. Type <code className="bg-secondary px-1 rounded">/</code> in the chat input to use them.
+        {t('Custom slash commands. Type / in the chat input to use them.')}
       </p>
       <div className="flex gap-4">
         <div className="w-40 shrink-0">
           <div className="flex gap-1 mb-2">
             <button onClick={handleNew} className="flex-1 flex items-center gap-1 px-2 py-1.5 text-xs bg-secondary rounded hover:bg-secondary/80">
-              <Plus className="w-3 h-3" /> New
+              <Plus className="w-3 h-3" /> {t('New')}
             </button>
             <button onClick={handleUpload} className="flex items-center gap-1 px-2 py-1.5 text-xs bg-secondary rounded hover:bg-secondary/80" title="Upload .md files">
               <Upload className="w-3 h-3" />
@@ -106,7 +116,7 @@ export function SkillsSection({ spaceDir }: { spaceDir?: string }) {
               className="w-full h-48 p-2 text-xs font-mono border border-border rounded bg-background resize-y"
             />
             <button onClick={handleSave} className="mt-2 px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm">
-              Save
+              {t('Save')}
             </button>
           </div>
         )}
