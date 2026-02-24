@@ -19,6 +19,52 @@ export interface OmcAgentDef {
   model?: string
 }
 
+export interface ResolvedSubagent {
+  name: string
+  description: string
+  prompt: string
+  model?: 'sonnet' | 'opus' | 'haiku'
+}
+
+export interface ResolvedOmcAgents {
+  resolvedSubagents: ResolvedSubagent[]
+  unresolvedAgents: string[]
+}
+
+function normalizeModel(model?: string): 'sonnet' | 'opus' | 'haiku' | undefined {
+  if (model === 'sonnet' || model === 'opus' || model === 'haiku') return model
+  return undefined
+}
+
+/**
+ * Resolve selected agent names into executable subagent definitions.
+ * Any unknown or incomplete definitions are returned in unresolvedAgents.
+ */
+export function resolveSelectedOmcAgents(
+  selectedAgents: Iterable<string>,
+  defs: Record<string, OmcAgentDef>
+): ResolvedOmcAgents {
+  const resolvedSubagents: ResolvedSubagent[] = []
+  const unresolvedAgents: string[] = []
+
+  for (const name of selectedAgents) {
+    const def = defs[name]
+    if (!def || !def.description || !def.prompt) {
+      unresolvedAgents.push(name)
+      continue
+    }
+
+    resolvedSubagents.push({
+      name,
+      description: def.description,
+      prompt: def.prompt,
+      model: normalizeModel(def.model)
+    })
+  }
+
+  return { resolvedSubagents, unresolvedAgents }
+}
+
 /** OMC agent categories for UI grouping */
 export const OMC_CATEGORIES: Record<string, { label: string; description: string }> = {
   build: {

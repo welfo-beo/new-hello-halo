@@ -13,6 +13,11 @@ import {
   testMcpConnections as agentTestMcpConnections,
   resolveQuestion
 } from '../services/agent'
+import {
+  getOmcAgentList,
+  getOmcAgents as getOmcAgentDefinitions,
+  getOmcSystemPrompt as getOmcSystemPromptText
+} from '../services/omc.service'
 
 // Image attachment type for multi-modal messages
 interface ImageAttachment {
@@ -146,6 +151,42 @@ export async function testMcpConnections(mainWindow?: BrowserWindow | null): Pro
   try {
     const result = await agentTestMcpConnections(mainWindow)
     return result
+  } catch (error: unknown) {
+    const err = error as Error
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Get OMC agent list for renderer display
+ */
+export function getOmcAgents(): ControllerResponse {
+  try {
+    return { success: true, data: getOmcAgentList() }
+  } catch (error: unknown) {
+    const err = error as Error
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Get full OMC agent definitions for execution
+ */
+export function getOmcAgentDefs(): ControllerResponse {
+  try {
+    return { success: true, data: getOmcAgentDefinitions() }
+  } catch (error: unknown) {
+    const err = error as Error
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Get OMC orchestration system prompt
+ */
+export function getOmcSystemPrompt(): ControllerResponse<string> {
+  try {
+    return { success: true, data: getOmcSystemPromptText() }
   } catch (error: unknown) {
     const err = error as Error
     return { success: false, error: err.message }

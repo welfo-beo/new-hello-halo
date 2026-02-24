@@ -340,6 +340,24 @@ export function registerApiRoutes(app: Express, mainWindow: BrowserWindow | null
     res.json(result)
   })
 
+  // OMC agent list (for Dev Mode UI)
+  app.get('/api/agent/omc-agents', async (_req: Request, res: Response) => {
+    const result = agentController.getOmcAgents()
+    res.json(result)
+  })
+
+  // OMC agent definitions (for Dev Mode execution)
+  app.get('/api/agent/omc-agent-defs', async (_req: Request, res: Response) => {
+    const result = agentController.getOmcAgentDefs()
+    res.json(result)
+  })
+
+  // OMC orchestration system prompt
+  app.get('/api/agent/omc-system-prompt', async (_req: Request, res: Response) => {
+    const result = agentController.getOmcSystemPrompt()
+    res.json(result)
+  })
+
   // ===== Artifact Routes =====
   app.get('/api/spaces/:spaceId/artifacts', async (req: Request, res: Response) => {
     try {
