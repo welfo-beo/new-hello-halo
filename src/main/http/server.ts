@@ -85,7 +85,17 @@ export async function startHttpServer(
   expressApp = express()
 
   // Middleware
-  expressApp.use(express.json())
+  // The `verify` callback captures the raw request body buffer on `req.rawBody`.
+  // This is required for webhook HMAC signature verification (WebhookSource):
+  // signatures are computed by senders over the EXACT raw bytes, so we must
+  // verify against the raw body — re-serializing the parsed JSON body would
+  // almost never match (key ordering / whitespace differences).
+  // See src/main/apps/runtime/sources/webhook.source.ts getRawBody().
+  expressApp.use(express.json({
+    verify: (req, _res, buf) => {
+      (req as any).rawBody = buf
+    }
+  }))
   expressApp.use(express.urlencoded({ extended: true }))
 
   // CORS for remote access

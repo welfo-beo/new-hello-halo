@@ -221,9 +221,14 @@ export class WebhookSource implements EventSourceAdapter {
 /**
  * Retrieve the raw request body for HMAC computation.
  *
- * Express's json middleware can be configured to keep the raw body via
- * `verify` option. If available, we use that. Otherwise we re-serialize
- * the parsed body (less ideal but functional for JSON payloads).
+ * Express's json middleware is configured with a `verify` callback (see
+ * src/main/http/server.ts) that stores the raw body buffer on `req.rawBody`.
+ * We use that buffer so the HMAC is computed over the EXACT bytes the sender
+ * signed — re-serializing the parsed JSON body would not match.
+ *
+ * The re-serialization fallback below is retained only as a defensive
+ * fallback (e.g. if a request bypasses the json middleware); it will not
+ * produce a matching signature for senders that sign the original bytes.
  */
 function getRawBody(req: Request): Buffer | null {
   // Check for raw body stored by Express json middleware's `verify` callback
@@ -235,7 +240,7 @@ function getRawBody(req: Request): Buffer | null {
     return Buffer.from(rawBody, 'utf-8')
   }
 
-  // Fallback: re-serialize the parsed JSON body
+  // Fallback: re-serialize the parsed JSON body (will NOT match sender signatures)
   if (req.body !== undefined && req.body !== null) {
     try {
       return Buffer.from(JSON.stringify(req.body), 'utf-8')

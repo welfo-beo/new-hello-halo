@@ -169,7 +169,7 @@
 
 ## 4) Known Gaps You Must Account For
 
-1. App activity HTTP route currently uses `limit` and `before`; renderer option names include `since/offset/type` (not all are consumed by backend).
+No known gaps at this time. (Previously: App activity HTTP route only consumed `limit`/`before` and dropped `offset`/`type`; fixed — the route and renderer API now round-trip all `ActivityQueryOptions` fields, matching the IPC path.)
 
 ## 5) Minimum Validation Before Handoff
 

@@ -1307,7 +1307,9 @@ export function registerApiRoutes(app: Express): void {
       if (!runtime) return
       const options: ActivityQueryOptions = {}
       if (req.query.limit) options.limit = Number(req.query.limit)
+      if (req.query.offset) options.offset = Number(req.query.offset)
       if (req.query.before) options.since = Number(req.query.before)
+      if (req.query.type) options.type = req.query.type as ActivityQueryOptions['type']
       const entries = runtime.getActivityEntries(appId, options)
       res.json({ success: true, data: entries })
     } catch (error) {

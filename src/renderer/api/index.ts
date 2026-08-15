@@ -1591,6 +1591,7 @@ export const api = {
     if (options?.limit) params.set('limit', String(options.limit))
     if (options?.offset) params.set('offset', String(options.offset))
     if (options?.since) params.set('before', String(options.since))
+    if (options?.type) params.set('type', String(options.type))
     const qs = params.toString()
     return httpRequest('GET', `/api/apps/${appId}/activity${qs ? '?' + qs : ''}`)
   },
