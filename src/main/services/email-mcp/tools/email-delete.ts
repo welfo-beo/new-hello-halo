@@ -24,7 +24,7 @@ export function createEmailDeleteTool(imap: ImapClient) {
         'If true, permanently delete (EXPUNGE — cannot be recovered). If false (default), move to Trash.'
       ),
     },
-    async (input) => {
+    async (input: { email_id: string; folder: string; permanent: boolean }) => {
       try {
         const ids = input.email_id.split(',').map(s => s.trim()).filter(Boolean)
         const count = await imap.deleteEmail(ids, input.folder, input.permanent)

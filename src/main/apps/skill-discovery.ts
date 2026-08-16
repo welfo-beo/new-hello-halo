@@ -16,7 +16,7 @@
  * empty or wrong list. The disk is the runtime source of truth.
  */
 
-import { existsSync, readdirSync, readFileSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, type Dirent } from 'fs'
 import { join } from 'path'
 import { resolveGlobalSkillsDir } from './manager/skill-sync'
 import { getWorkingDir } from '../services/agent/helpers'
@@ -30,7 +30,7 @@ function scanSkillsDir(dir: string, scope: 'global' | 'space'): AvailableSkill[]
   if (!existsSync(dir)) return []
 
   const results: AvailableSkill[] = []
-  let entries: ReturnType<typeof readdirSync>
+  let entries: Dirent<string>[]
   try {
     entries = readdirSync(dir, { withFileTypes: true })
   } catch (err) {

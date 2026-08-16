@@ -93,7 +93,13 @@ export function createMemoryMcpServer(
         'If specified, reads that archive file directly (mode is ignored). Use memory_list to discover available files.'
       )
     },
-    async (args) => {
+    async (args: {
+      scope: string
+      mode: 'full' | 'headers' | 'section' | 'tail'
+      section?: string
+      limit?: number
+      path?: string
+    }) => {
       try {
         const content = await service.read(caller, {
           scope: args.scope as any,
@@ -164,7 +170,7 @@ export function createMemoryMcpServer(
         'For app memory, prefer "replace" to maintain a clean state document.'
       )
     },
-    async (args) => {
+    async (args: { scope: string; content: string; mode: 'append' | 'replace' }) => {
       try {
         // For app callers writing to space scope, enforce append-only regardless
         // of what the AI requested. This is the server-side enforcement layer.
@@ -207,7 +213,7 @@ export function createMemoryMcpServer(
         `Memory scope to list archive files from.`
       )
     },
-    async (args) => {
+    async (args: { scope: string }) => {
       try {
         const files = await service.list(caller, { scope: args.scope as any })
 

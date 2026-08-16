@@ -173,7 +173,7 @@ export class ImapClient {
 
     for (const mailbox of mailboxes) {
       const displayName = getFolderDisplayName(mailbox.path)
-      const flags = new Set(Array.from(mailbox.flags ?? []))
+      const flags = new Set(Array.from(mailbox.flags ?? [], (flag) => String(flag)))
       const sysType = identifySystemFolder(mailbox.path, flags)
 
       const info: FolderInfo = {

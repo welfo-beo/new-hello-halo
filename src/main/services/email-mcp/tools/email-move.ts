@@ -25,7 +25,7 @@ export function createEmailMoveTool(imap: ImapClient) {
         'Destination folder. Use friendly names: "Trash", "Junk", "Drafts", "Sent", or any custom folder name.'
       ),
     },
-    async (input) => {
+    async (input: { email_id: string; from_folder: string; to_folder: string }) => {
       try {
         await imap.moveEmail(input.email_id, input.from_folder, input.to_folder)
         return textResult(JSON.stringify({

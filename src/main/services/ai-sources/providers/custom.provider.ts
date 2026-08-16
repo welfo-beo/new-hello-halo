@@ -34,8 +34,8 @@ import type {
 } from '../../../../shared/interfaces'
 import type {
   AISourceType,
+  AISourcesConfig,
   BackendRequestConfig,
-  LegacyAISourcesConfig,
   CustomSourceConfig
 } from '../../../../shared/types'
 import { AVAILABLE_MODELS } from '../../../../shared/types'
@@ -62,7 +62,7 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  isConfigured(config: LegacyAISourcesConfig): boolean {
+  isConfigured(config: AISourcesConfig): boolean {
     return !!(config.custom?.apiKey)
   }
 
@@ -71,7 +71,7 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  getBackendConfig(config: LegacyAISourcesConfig): BackendRequestConfig | null {
+  getBackendConfig(config: AISourcesConfig): BackendRequestConfig | null {
     const customConfig = config.custom
     if (!customConfig?.apiKey) {
       return null
@@ -109,7 +109,7 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  getCurrentModel(config: LegacyAISourcesConfig): string | null {
+  getCurrentModel(config: AISourcesConfig): string | null {
     return config.custom?.model || null
   }
 
@@ -118,7 +118,7 @@ export class CustomAISourceProvider implements AISourceProvider {
    *
    * @param config - Legacy format config (v1), not called for API Key providers
    */
-  async getAvailableModels(config: LegacyAISourcesConfig): Promise<string[]> {
+  async getAvailableModels(config: AISourcesConfig): Promise<string[]> {
     const customConfig = config.custom
     if (!customConfig) {
       return []
@@ -137,7 +137,7 @@ export class CustomAISourceProvider implements AISourceProvider {
   /**
    * No refresh needed for custom API
    */
-  async refreshConfig(_config: LegacyAISourcesConfig): Promise<ProviderResult<Partial<LegacyAISourcesConfig>>> {
+  async refreshConfig(_config: AISourcesConfig): Promise<ProviderResult<Partial<AISourcesConfig>>> {
     // Custom API doesn't need refresh - configuration is static
     return { success: true, data: {} }
   }

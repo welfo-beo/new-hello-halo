@@ -159,7 +159,7 @@ export function ptyHostRequest<T extends PtyHostRequest['type']>(
       timer
     })
 
-    host.send({ ...msg, requestId } as MainToPtyHostMessage)
+    host.send({ ...msg, requestId } as unknown as MainToPtyHostMessage)
   })
 }
 

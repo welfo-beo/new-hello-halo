@@ -178,7 +178,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   // Expose scroll control to parent (ChatView)
   useImperativeHandle(ref, () => ({
     scrollToIndex: (index: number, behavior: ScrollBehavior = 'smooth') => {
-      virtuosoRef.current?.scrollToIndex({ index, behavior, align: 'center' })
+      virtuosoRef.current?.scrollToIndex({ index, behavior: behavior as 'auto' | 'smooth', align: 'center' })
     },
     scrollToBottom: (behavior: ScrollBehavior = 'smooth') => {
       const el = scrollerRef.current

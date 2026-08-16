@@ -50,7 +50,13 @@ The last remaining tab cannot be closed.`,
       'Maximum wait time in milliseconds for action: "new" page load. Default: 30000. Set to 0 to use default.'
     )
   },
-  async (args) => {
+  async (args: {
+    action: 'list' | 'new' | 'select' | 'close'
+    url?: string
+    device?: 'pc' | 'h5'
+    pageIdx?: number
+    timeout?: number
+  }) => {
     const states = browserViewManager.getAllStates()
 
     switch (args.action) {

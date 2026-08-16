@@ -190,7 +190,7 @@ export function StoreHeader() {
 
       {showShareDialog && (
         <ShareToStoreDialog
-          initialType={publishPreselect?.type}
+          initialType={publishPreselect?.type as 'automation' | 'skill'}
           initialAppId={publishPreselect?.appId}
           entry={publishPreselect ? 'share' : 'store'}
           onClose={() => { setShowShareDialog(false); setPublishPreselect(null) }}

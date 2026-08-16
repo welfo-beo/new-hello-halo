@@ -19,7 +19,7 @@ export function createCalendarDeleteTool(caldav: CalDavClient) {
         'The event UID from calendar_list results. Example: "9aed7014-53e5-4681-9e46-7287871f32c4"'
       ),
     },
-    async (input) => {
+    async (input: { uid: string }) => {
       try {
         await caldav.deleteEvent(input.uid)
         return textResult(JSON.stringify({

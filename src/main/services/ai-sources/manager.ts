@@ -814,7 +814,7 @@ class AISourceManager {
         console.log('[AISourceManager] Token refreshed and saved')
       } else {
         console.error(`[AISourceManager] Token refresh failed:`, refreshResult.error)
-        return refreshResult
+        return { success: false, error: refreshResult.error }
       }
     }
 

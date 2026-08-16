@@ -13,7 +13,8 @@ import type {
   AnthropicContentBlockStopEvent,
   AnthropicMessageDeltaEvent,
   AnthropicMessageStopEvent,
-  AnthropicStopReason
+  AnthropicStopReason,
+  AnthropicWebSearchResult
 } from '../types'
 
 export interface SSEWriterOptions {
@@ -135,7 +136,7 @@ export class SSEWriter {
       content_block: {
         type: 'web_search_tool_result',
         tool_use_id: toolUseId,
-        content: results
+        content: results as AnthropicWebSearchResult[]
       }
     }
     return this.writeEvent('content_block_start', event)

@@ -32,7 +32,7 @@ export function createEmailForwardTool(imap: ImapClient, smtp: SmtpClient) {
         'CC recipients.'
       ),
     },
-    async (input) => {
+    async (input: { email_id: string; to: string; folder: string; body: string; cc?: string }) => {
       try {
         const raw = await imap.getRawMessage(input.email_id, input.folder)
         const { simpleParser } = await import('mailparser')

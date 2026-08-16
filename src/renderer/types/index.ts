@@ -5,6 +5,7 @@
 // Import values needed in this file's scope
 import {
   AISourcesConfig,
+  ApiProvider,
   DEFAULT_MODEL,
   getCurrentModelName,
   hasAnyAISource
@@ -288,8 +289,8 @@ export interface HaloConfig {
   notifications?: NotificationConfig;  // Notification preferences
   notificationChannels?: NotificationChannelsConfig;  // External notification channels
   /** @deprecated Migrated to imChannels.instances[] */
-  wecomBot?: import('../../../shared/types/notification-channels').WecomBotConfig;
-  imChannels?: import('../../../shared/types/notification-channels').ImChannelsConfig;  // IM channels (multi-instance)
+  wecomBot?: import('../../shared/types/notification-channels').WecomBotConfig;
+  imChannels?: import('../../shared/types/notification-channels').ImChannelsConfig;  // IM channels (multi-instance)
   agent?: AgentConfig;  // Agent behavior settings
   layout?: LayoutConfig;  // Global layout preferences (panel sizes and visibility)
   chat?: ChatConfig;  // Chat behavior preferences
@@ -511,7 +512,8 @@ export interface ThoughtsSummary {
  * Lightweight file changes summary stored in message metadata.
  * Allows immediate display of file change stats without loading full thoughts.
  */
-export type { FileChangesSummary } from '../../shared/file-changes';
+import type { FileChangesSummary } from '../../shared/file-changes';
+export type { FileChangesSummary };
 
 export interface Message {
   id: string;

@@ -38,7 +38,7 @@ If the page appears to still be loading (incomplete content, spinners), wait bri
       'Save snapshot to this file path instead of returning in the response. Useful for very large pages to avoid token overhead.'
     )
   },
-  async (args) => {
+  async (args: { verbose?: boolean; filePath?: string }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page. Use browser_navigate first.', true)
     }
@@ -94,7 +94,13 @@ For all other observation needs, prefer browser_snapshot — it's faster and use
       'Save to this file path instead of returning in the response.'
     )
   },
-  async (args) => {
+  async (args: {
+    format?: 'png' | 'jpeg' | 'webp'
+    quality?: number
+    uid?: string
+    fullPage?: boolean
+    filePath?: string
+  }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }
@@ -174,7 +180,7 @@ This is the escape hatch — use it for anything other tools cannot handle: cust
       'Page elements to pass as function arguments. Each uid is resolved to its DOM node and passed positionally.'
     )
   },
-  async (args) => {
+  async (args: { function: string; args?: { uid: string }[] }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }

@@ -37,6 +37,7 @@ export function ToolCard({ toolCall, conversationId }: ToolCardProps) {
       text: t('Pending'),
       className: 'tool-pending',
       color: 'text-muted-foreground',
+      spin: false,
     },
     running: {
       icon: Loader2,
@@ -50,18 +51,21 @@ export function ToolCard({ toolCall, conversationId }: ToolCardProps) {
       text: t('Completed'),
       className: 'tool-success',
       color: 'text-green-500',
+      spin: false,
     },
     error: {
       icon: XCircle,
       text: t('Failed'),
       className: 'tool-error',
       color: 'text-red-500',
+      spin: false,
     },
     waiting_approval: {
       icon: AlertCircle,
       text: t('Needs confirmation'),
       className: 'tool-waiting',
       color: 'text-yellow-500',
+      spin: false,
     },
   } as const
 

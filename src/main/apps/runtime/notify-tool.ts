@@ -149,7 +149,7 @@ function buildNotifyChannelTool(context: NotifyToolContext) {
         'Notification body. The main content to deliver. Write for humans — clear and direct.'
       ),
     },
-    async (input) => {
+    async (input: { channel: NotificationChannelType; title: string; message: string }) => {
       const runTag = context.runId.slice(0, 8)
       console.log(
         `[Runtime][${runTag}] notify_channel called: channel=${input.channel}, title="${input.title}"`
@@ -237,7 +237,7 @@ function buildNotifyBotTool(context: NotifyToolContext) {
         'Display name for the file (e.g. "Report.pdf"). Defaults to the file\'s basename.'
       ),
     },
-    async (input) => {
+    async (input: { to: string; message?: string; file?: string; filename?: string }) => {
       const runTag = context.runId.slice(0, 8)
       console.log(
         `[Runtime][${runTag}] notify_bot called: to="${input.to}", ` +

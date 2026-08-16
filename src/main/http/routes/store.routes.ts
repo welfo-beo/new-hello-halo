@@ -29,12 +29,13 @@ export function registerStoreRoutes(app: Express): void {
   app.post('/api/store/query', async (req: Request, res: Response) => {
     try {
       const { search, type, category, page, pageSize, locale } = req.body as Record<string, unknown>
+      const appTypes: AppType[] = ['automation', 'skill', 'mcp', 'extension']
       const result = await storeController.queryStoreApps({
         search: typeof search === 'string' ? search : undefined,
-        type: typeof type === 'string' ? type : undefined,
+        type: typeof type === 'string' && appTypes.includes(type as AppType) ? type as AppType : undefined,
         category: typeof category === 'string' ? category : undefined,
-        page: typeof page === 'number' ? page : undefined,
-        pageSize: typeof pageSize === 'number' ? pageSize : undefined,
+        page: typeof page === 'number' ? page : 1,
+        pageSize: typeof pageSize === 'number' ? pageSize : 20,
         locale: typeof locale === 'string' ? locale : undefined,
       })
       res.json(result)

@@ -40,7 +40,15 @@ export function createEmailSearchTool(imap: ImapClient) {
         'Maximum results to return (1-50). Default: 20.'
       ),
     },
-    async (input) => {
+    async (input: {
+      folder: string
+      subject?: string
+      from?: string
+      to?: string
+      since?: string
+      before?: string
+      limit: number
+    }) => {
       // Validate at least one search parameter is provided
       if (!input.subject && !input.from && !input.to && !input.since && !input.before) {
         return textResult(

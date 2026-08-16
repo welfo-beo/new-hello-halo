@@ -526,10 +526,11 @@ export async function installFromStore(
   }
 
   const { entry, registryId } = found
+  const entryFormat = entry.format
 
   if (!isBundleFormat(entry)) {
     throw new Error(
-      `This app uses legacy package format "${String(entry.format)}". Bundle packages are required in this build.`
+      `This app uses legacy package format "${String(entryFormat)}". Bundle packages are required in this build.`
     )
   }
 
@@ -744,7 +745,7 @@ export async function installRequiredSkills(
  * all data needed to render the detail page (name, description, tags, etc.).
  */
 function buildPreviewSpec(entry: RegistryEntry, registryId: string): AppSpec {
-  const store = { slug: entry.slug, registry_id: registryId }
+  const store = { slug: entry.slug, registry_id: registryId, tags: [] }
   const requires = (entry.requires_mcps?.length || entry.requires_skills?.length)
     ? {
         mcps: entry.requires_mcps?.map(id => ({ id })),
@@ -1077,7 +1078,7 @@ export function updateRegistryAdapterConfig(
 export function loadConfig(): RegistryServiceConfig {
   try {
     const haloConfig = getConfig()
-    const storeConfig = (haloConfig as Record<string, unknown>)[CONFIG_KEY] as Record<string, unknown> | undefined
+    const storeConfig = (haloConfig as unknown as Record<string, unknown>)[CONFIG_KEY] as Record<string, unknown> | undefined
 
     if (!storeConfig) {
       return {
@@ -1424,6 +1425,7 @@ function withInstallStoreMetadata(spec: AppSpec, slug: string, registryId: strin
       ...(spec.store ?? {}),
       slug: spec.store?.slug ?? slug,
       registry_id: registryId,
+      tags: spec.store?.tags ?? [],
     },
   }
 }

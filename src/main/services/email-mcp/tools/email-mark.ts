@@ -25,7 +25,7 @@ export function createEmailMarkTool(imap: ImapClient) {
         'Folder containing the email(s). Defaults to INBOX.'
       ),
     },
-    async (input) => {
+    async (input: { email_id: string; action: 'read' | 'unread' | 'flag' | 'unflag'; folder: string }) => {
       try {
         const ids = input.email_id.split(',').map(s => s.trim()).filter(Boolean)
         const count = await imap.markEmail(ids, input.action, input.folder)

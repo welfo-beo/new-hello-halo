@@ -25,7 +25,7 @@ export function createCalendarListTool(caldav: CalDavClient) {
         'Maximum number of events to return. Range: 1-100. Default: 20. Events are sorted by start time.'
       ),
     },
-    async (input) => {
+    async (input: { start_date?: string; end_date?: string; limit?: number }) => {
       try {
         const startDate = input.start_date || new Date().toISOString().slice(0, 10)
         const endDate = input.end_date || (() => {

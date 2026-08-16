@@ -77,7 +77,11 @@ Examples:
       `Execution timeout in ms. Default: ${BROWSER_RUN_DEFAULT_TIMEOUT}. Max: ${BROWSER_RUN_MAX_TIMEOUT}.`
     ),
   },
-  async (args) => {
+  async (args: {
+    file: string
+    params?: Record<string, unknown>
+    timeout?: number
+  }) => {
     // 1. Validate active page
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page. Use browser_navigate first.', true)

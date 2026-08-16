@@ -633,6 +633,11 @@ interface HaloConfig {
   isFirstLaunch: boolean
   // True when the user deferred model configuration in the first-run wizard.
   modelConfigSkipped?: boolean
+  // Notification preferences
+  notifications?: {
+    /** System notification when a task completes */
+    taskComplete: boolean
+  }
   // External notification channels (email, WeCom, DingTalk, Feishu, webhook)
   notificationChannels?: import('../../shared/types/notification-channels').NotificationChannelsConfig
   /**

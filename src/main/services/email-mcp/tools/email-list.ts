@@ -26,7 +26,7 @@ export function createEmailListTool(imap: ImapClient) {
         'If true, only return unread (unseen) emails. Useful for checking what needs attention.'
       ),
     },
-    async (input) => {
+    async (input: { folder: string; limit: number; unread_only: boolean }) => {
       try {
         const result = await imap.listEmails(input.folder, input.limit, input.unread_only)
         return textResult(JSON.stringify({

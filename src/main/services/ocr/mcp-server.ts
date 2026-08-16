@@ -57,7 +57,7 @@ Returns: the extracted text per file, each under a "## <path>" heading. Files wi
         .max(20)
         .describe('Absolute paths of the image files to extract text from (1-20 files).'),
     },
-    async (args) => {
+    async (args: { paths: string[] }) => {
       const segments: string[] = []
 
       for (const path of args.paths) {

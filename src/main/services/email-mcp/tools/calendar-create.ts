@@ -36,7 +36,15 @@ export function createCalendarCreateTool(caldav: CalDavClient) {
         'Reminder before event in minutes. Set to 0 for no reminder. Default: 15.'
       ),
     },
-    async (input) => {
+    async (input: {
+      summary: string
+      start: string
+      end: string
+      description: string
+      location: string
+      attendees?: string[]
+      reminder_minutes: number
+    }) => {
       try {
         const uid = await caldav.createEvent({
           summary: input.summary,

@@ -67,7 +67,7 @@ export interface EngineCapabilities {
     /** Tool input streaming (input_json_delta in CC). */
     toolInput: 'token' | 'final-only'
     /** Tool output (e.g. shell stdout) streaming. */
-    toolOutput: 'token' | 'final-only'
+    toolOutput: 'token' | 'item' | 'final-only'
   }
   tools: {
     /** Tool kinds the engine emits with its native CC-compatible name. */

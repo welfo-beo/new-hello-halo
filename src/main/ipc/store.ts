@@ -47,7 +47,14 @@ export function registerStoreHandlers(): void {
   registerRawRpcHandlers(storeRpc, {
     // ── store:query (new primary entry point) ─────────────────────────────
     storeQuery: async (params: { search?: string; type?: string; category?: string; page?: number; pageSize?: number; locale?: string }) => {
-      return storeController.queryStoreApps(params)
+      return storeController.queryStoreApps({
+        search: params.search,
+        type: params.type as AppType | undefined,
+        category: params.category,
+        page: params.page ?? 1,
+        pageSize: params.pageSize ?? 20,
+        locale: params.locale,
+      })
     },
 
     // ── store:list-apps (legacy compat) ─────────────────────────────────

@@ -343,14 +343,22 @@ export interface HaloAPI {
     spaceId?: string
   ) => Promise<IpcResponse>
   cancelSearch: () => Promise<IpcResponse>
-  onSearchProgress: (callback: (data: unknown) => void) => () => void
+  onSearchProgress: (callback: (data: { current: number; total: number; searchId: string }) => void) => () => void
   onSearchCancelled: (callback: () => void) => () => void
 
   // Updater
   checkForUpdates: () => Promise<IpcResponse>
   installUpdate: () => Promise<IpcResponse>
-  getVersion: () => Promise<IpcResponse>
-  onUpdaterStatus: (callback: (data: unknown) => void) => () => void
+  getVersion: () => Promise<string>
+  onUpdaterStatus: (callback: (data: {
+    status: 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'manual-download' | 'error'
+    version?: string
+    percent?: number
+    message?: string
+    releaseNotes?: string | Array<{ version: string; note: string }>
+    installMode?: 'installer' | 'restart'
+    downloadUrl?: string
+  }) => void) => () => void
 
   // Display scale (persistent UI zoom)
   getDisplayScale: () => Promise<IpcResponse>
@@ -538,7 +546,7 @@ export interface HaloAPI {
   appChatRestart: (appId: string) => Promise<IpcResponse<{ sessionsClosed: number }>>
   appImChatMessages: (input: { appId: string; spaceId: string; channel: string; chatType: 'direct' | 'group'; chatId: string }) => Promise<IpcResponse>
   appImChatClear: (input: { appId: string; spaceId: string; channel: string; chatType: 'direct' | 'group'; chatId: string }) => Promise<IpcResponse>
-  appImChatStop: (input: { appId: string; channel: string; chatType: 'direct' | 'group'; chatId: string }) => Promise<IpcResponse>
+  appImChatStop: (input: { appId: string; channel: string; chatType: 'direct' | 'group'; chatId: string }) => Promise<IpcResponse<{ stopped: boolean }>>
 
   // Native multi-session lifecycle. Listing/renaming reuse imSessionsList /
   // imSessionsSetCustomName (local sessions surface there with source==='local').
@@ -555,13 +563,19 @@ export interface HaloAPI {
   onImChannelInstanceUpdated: (callback: (data: unknown) => void) => () => void
 
   // Notification (in-app toast)
-  onNotificationToast: (callback: (data: unknown) => void) => () => void
+  onNotificationToast: (callback: (data: {
+    title: string
+    body?: string
+    variant?: 'default' | 'success' | 'warning' | 'error'
+    duration?: number
+    appId?: string
+  }) => void) => () => void
 
   // Store (App Registry)
   storeQuery: (params: { search?: string; type?: string; category?: string; page?: number; pageSize?: number; locale?: string }) => Promise<IpcResponse>
   storeListApps: (query: { search?: string; locale?: string; category?: string; type?: string; tags?: string[] }) => Promise<IpcResponse>
   storeGetAppDetail: (slug: string) => Promise<IpcResponse>
-  storeGetAppDocument: (slug: string) => Promise<IpcResponse>
+  storeGetAppDocument: (slug: string) => Promise<IpcResponse<{ content: string | null }>>
   storeInstall: (
     input: { slug: string; spaceId: string | null; userConfig?: Record<string, unknown> },
     onProgress?: (progress: StoreInstallProgress) => void,

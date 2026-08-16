@@ -31,6 +31,24 @@ import type { ResolvedShellSpec, ShellFamily } from '../../../shared/types/termi
 export type { ResolvedShellSpec, ShellFamily }
 
 /**
+ * Shell executables the terminal may spawn, by basename (case-insensitive,
+ * `.exe` ignored). `preferred` arrives from the renderer / agent SDK over IPC,
+ * so an arbitrary value would let a compromised renderer execute any binary
+ * (downloaded malware, for example). Policy lives here, in main.
+ */
+const ALLOWED_SHELL_BASENAMES = new Set([
+  'bash', 'zsh', 'sh', 'dash', 'ksh', 'ash', 'mksh', 'fish',
+  'powershell', 'pwsh', 'cmd'
+])
+
+function assertAllowedShell(file: string): void {
+  const base = (file.split(/[\\/]/).pop() || '').toLowerCase().replace(/\.exe$/, '')
+  if (!ALLOWED_SHELL_BASENAMES.has(base)) {
+    throw new Error(`Unsupported shell: ${file}`)
+  }
+}
+
+/**
  * Resolve the shell to spawn. An explicit `preferred` executable wins and
  * receives neutral interactive args for its own family; otherwise the platform
  * default is used.
@@ -41,6 +59,7 @@ export function resolveShell(preferred?: string): ResolvedShellSpec {
   // An explicit choice must get args matching THAT executable — never staple
   // one shell family's args onto another (different arg grammar).
   if (preferred) {
+    assertAllowedShell(preferred)
     return { file: preferred, args: interactiveArgs(preferred), env, family: shellFamily(preferred) }
   }
 

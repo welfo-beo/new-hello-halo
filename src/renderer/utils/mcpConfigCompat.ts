@@ -46,7 +46,7 @@ function validateStringRecord(value: unknown, fieldName: string): string | null 
   return null
 }
 
-function looksLikeServerConfig(value: unknown): value is Record<string, unknown> {
+function looksLikeServerConfig(value: unknown): boolean {
   return isRecord(value) && ('command' in value || 'url' in value || 'type' in value || 'transport' in value)
 }
 

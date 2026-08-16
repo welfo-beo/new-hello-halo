@@ -27,7 +27,7 @@ export interface ControllerResponse<T = unknown> {
 export function getConfig(): ControllerResponse {
   try {
     const config = serviceGetConfig()
-    return { success: true, data: maskConfigFields(config as Record<string, unknown>) }
+    return { success: true, data: maskConfigFields(config as unknown as Record<string, unknown>) }
   } catch (error: unknown) {
     const err = error as Error
     return { success: false, error: err.message }
@@ -53,10 +53,10 @@ export function getCredentialFailures(): ControllerResponse {
  */
 export function setConfig(updates: Record<string, unknown>): ControllerResponse {
   try {
-    const existing = serviceGetConfig() as Record<string, unknown>
+    const existing = serviceGetConfig() as unknown as Record<string, unknown>
     unmaskSentinels(updates, existing)
     const config = serviceSaveConfig(updates as any)
-    return { success: true, data: maskConfigFields(config as Record<string, unknown>) }
+    return { success: true, data: maskConfigFields(config as unknown as Record<string, unknown>) }
   } catch (error: unknown) {
     const err = error as Error
     return { success: false, error: err.message }

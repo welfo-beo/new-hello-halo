@@ -40,7 +40,7 @@
     "@img/sharp-win32-arm64" "^0.34.2"
     "@img/sharp-win32-x64" "^0.34.2"
 
-"@anthropic-ai/sdk@^0.74.0", "@anthropic-ai/sdk@latest":
+"@anthropic-ai/sdk@^0.74.0", "@anthropic-ai/sdk@0.74.0":
   version "0.74.0"
   resolved "https://registry.npmmirror.com/@anthropic-ai/sdk/-/sdk-0.74.0.tgz"
   integrity sha512-srbJV7JKsc5cQ6eVuFzjZO7UR3xEPJqPamHFIe29bs38Ij2IripoAhC0S5NslNbaFUYqBKypmmpzMTpqfHEUDw==
@@ -1803,6 +1803,14 @@
   dependencies:
     "@types/node" "*"
 
+"@types/mailparser@^3.4.6":
+  version "3.4.6"
+  resolved "https://registry.npmjs.org/@types/mailparser/-/mailparser-3.4.6.tgz"
+  integrity sha512-wVV3cnIKzxTffaPH8iRnddX1zahbYB1ZEoAxyhoBo3TBCBuK6nZ8M8JYO/RhsCuuBVOw/DEN/t/ENbruwlxn6Q==
+  dependencies:
+    "@types/node" "*"
+    iconv-lite "^0.6.3"
+
 "@types/mdast@^4.0.0":
   version "4.0.4"
   resolved "https://registry.npmmirror.com/@types/mdast/-/mdast-4.0.4.tgz"
@@ -1838,6 +1846,13 @@
   integrity sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==
   dependencies:
     undici-types "~5.26.4"
+
+"@types/nodemailer@^8.0.1":
+  version "8.0.1"
+  resolved "https://registry.npmjs.org/@types/nodemailer/-/nodemailer-8.0.1.tgz"
+  integrity sha512-PxpaInm8V1JQDd4j0ds5HfvWQk8JupS1C0Picb96QJsrrRDjBH+DlK7L4ZdNSqNULhiZRQHc40nLVShaGxXAMw==
+  dependencies:
+    "@types/node" "*"
 
 "@types/parse-json@^4.0.0":
   version "4.0.2"

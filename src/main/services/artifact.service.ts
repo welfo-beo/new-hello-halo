@@ -13,7 +13,7 @@ import { promises as fsAsync } from 'fs'
 import { join, extname, basename, dirname, sep } from 'path'
 import { shell } from 'electron'
 import { getTempSpacePath } from '../foundation/config.service'
-import { getSpace } from './space.service'
+import { getSpace, listSpaces } from './space.service'
 import {
   listArtifacts as listArtifactsCached,
   listArtifactsTree as listArtifactsTreeCached,
@@ -55,6 +55,40 @@ function getWorkingDir(spaceId: string): string {
   }
 
   return getTempSpacePath()
+}
+
+/**
+ * Security guard for IPC entry points that receive a raw absolute path with
+ * no spaceId: the resolved path must live inside the temp-space directory or
+ * a registered space's working directory. Prevents a compromised renderer
+ * from reading, overwriting or launching arbitrary files outside artifact
+ * workspaces (e.g. ~/.ssh/id_rsa).
+ *
+ * For paths that don't exist yet (save-as), the parent directory is
+ * validated instead, mirroring validatePathInWorkspace's allowNew behavior.
+ */
+export function assertPathInsideAnyWorkspace(filePath: string): void {
+  if (!filePath) {
+    throw new Error('File path is required')
+  }
+
+  const pathToCheck = existsSync(filePath) ? filePath : dirname(filePath)
+  const realPath = realpathSync(pathToCheck)
+
+  const allowedRoots = [
+    getTempSpacePath(),
+    ...listSpaces().map((space) => space.workingDir || space.path),
+  ]
+
+  for (const root of allowedRoots) {
+    if (!existsSync(root)) continue
+    const realRoot = realpathSync(root)
+    const realRootWithSep = realRoot.endsWith(sep) ? realRoot : realRoot + sep
+    if (realPath === realRoot || realPath.startsWith(realRootWithSep)) {
+      return
+    }
+  }
+  throw new Error('Access denied: path is outside workspace')
 }
 
 /**
@@ -301,6 +335,8 @@ export function readArtifactContent(filePath: string): ArtifactContent {
     throw new Error(`File not found: ${filePath}`)
   }
 
+  assertPathInsideAnyWorkspace(filePath)
+
   const stats = statSync(filePath)
   if (stats.isDirectory()) {
     throw new Error(`Cannot read directory content: ${filePath}`)
@@ -543,6 +579,8 @@ export function detectFileType(filePath: string): FileTypeInfo {
       mimeType: 'application/octet-stream',
     }
   }
+
+  assertPathInsideAnyWorkspace(filePath)
 
   const stats = statSync(filePath)
   if (stats.isDirectory()) {
@@ -816,6 +854,8 @@ export function saveArtifactContent(filePath: string, content: string): void {
   if (!filePath) {
     throw new Error('File path is required')
   }
+
+  assertPathInsideAnyWorkspace(filePath)
 
   try {
     writeFileSync(filePath, content, 'utf-8')

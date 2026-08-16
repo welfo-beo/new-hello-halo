@@ -47,7 +47,7 @@ Use device: "h5" only when the target site is mobile-only or the user explicitly
       'Maximum wait time in milliseconds for page load. Default: 30000. Set to 0 to use default.'
     )
   },
-  async (args) => {
+  async (args: { url: string; device?: 'pc' | 'h5'; timeout?: number }) => {
     const timeout = (args.timeout && args.timeout > 0) ? args.timeout : NAV_TIMEOUT
     const requestedDevice: DeviceMode = args.device ?? 'pc'
     const activeViewId = ctx.getActiveViewId()
@@ -105,7 +105,7 @@ Default timeout: 30 seconds.`,
       'Maximum wait time in milliseconds. Default: 30000. Set to 0 to use default.'
     )
   },
-  async (args) => {
+  async (args: { text: string; timeout?: number }) => {
     const timeout = (args.timeout && args.timeout > 0) ? args.timeout : NAV_TIMEOUT
 
     try {
@@ -132,7 +132,7 @@ For prompt() dialogs that require text input, provide the promptText parameter b
       'Text to enter into a prompt() dialog before accepting. Ignored for alert and confirm dialogs.'
     )
   },
-  async (args) => {
+  async (args: { action: 'accept' | 'dismiss'; promptText?: string }) => {
     const dialog = ctx.getPendingDialog()
     if (!dialog) {
       return textResult('No open dialog found.', true)

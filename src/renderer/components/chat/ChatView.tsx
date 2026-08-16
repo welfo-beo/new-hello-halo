@@ -451,7 +451,7 @@ export function ChatView({ isCompact = false }: ChatViewProps) {
 
         {/* Scroll to bottom button - positioned outside scroll container */}
         <ScrollToBottomButton
-          visible={showScrollButton && hasMessages}
+          visible={Boolean(showScrollButton && hasMessages)}
           onClick={() => messageListRef.current?.scrollToBottom('auto')}
         />
       </div>

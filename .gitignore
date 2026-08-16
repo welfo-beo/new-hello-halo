@@ -46,7 +46,12 @@ scripts/deploy_local_*.sh
 
 # Backup files
 *.backup
+*.bak
+*.patch.back
 *copy.*
+
+# IDE share/export artifacts
+.trae-html-share-packages/
 
 # Website (landing page, managed separately)
 website/

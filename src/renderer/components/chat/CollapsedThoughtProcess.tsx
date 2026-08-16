@@ -194,7 +194,7 @@ function LazyCollapsedThoughtItem({
   }
 
   return (
-    <div ref={ref} style={{ minHeight: COLLAPSED_THOUGHT_ESTIMATED_HEIGHT }} className="border-b border-border/20 last:border-b-0" />
+    <div ref={ref as RefObject<HTMLDivElement>} style={{ minHeight: COLLAPSED_THOUGHT_ESTIMATED_HEIGHT }} className="border-b border-border/20 last:border-b-0" />
   )
 }
 

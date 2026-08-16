@@ -21,7 +21,8 @@ import {
   createFolder,
   trashArtifact,
   renameArtifact,
-  moveArtifact
+  moveArtifact,
+  assertPathInsideAnyWorkspace
 } from '../services/artifact.service'
 import { artifactRpc } from '../../shared/rpc/contracts/artifact.contract'
 import { registerRawRpcHandlers } from './rpc'
@@ -92,6 +93,7 @@ export function registerArtifactHandlers(): void {
     openArtifact: async (filePath: string) => {
       try {
         console.log(`[IPC] artifact:open - path: ${filePath}`)
+        assertPathInsideAnyWorkspace(filePath)
         const error = await shell.openPath(filePath)
         if (error) {
           console.error('[IPC] artifact:open error:', error)
@@ -108,6 +110,7 @@ export function registerArtifactHandlers(): void {
     showArtifactInFolder: async (filePath: string) => {
       try {
         console.log(`[IPC] artifact:show-in-folder - path: ${filePath}`)
+        assertPathInsideAnyWorkspace(filePath)
         shell.showItemInFolder(filePath)
         return { success: true }
       } catch (error) {

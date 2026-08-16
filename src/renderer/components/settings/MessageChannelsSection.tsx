@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from '../../i18n'
 import { api } from '../../api'
+import type { ApiResponse } from '../../api/_shared'
 import { useAppsStore } from '../../stores/apps.store'
 import type { HaloConfig } from '../../types'
 import { NOTIFICATION_CHANNEL_META } from '../../../shared/types/notification-channels'
@@ -826,7 +827,7 @@ function PermissionSection({ instance, onChange, onDebouncedChange, permissionDe
 
   // Derive display values
   const currentAllowedTools = guestPolicy?.allowedTools ?? []
-  const builtinNames = new Set(GUEST_SAFE_BUILTIN_TOOLS.map(t => t.name))
+  const builtinNames = new Set<string>(GUEST_SAFE_BUILTIN_TOOLS.map(t => t.name))
   const selectedBuiltinTools = new Set(currentAllowedTools.filter(t => builtinNames.has(t)))
 
   const ownersDisplay = ownersDraft ?? owners.join(', ')
@@ -1295,8 +1296,8 @@ export function MessageChannelsSection({ config, setConfig }: MessageChannelsSec
   // Load product-level permission defaults (once)
   useEffect(() => {
     api.imChannelsPermissionDefaults()
-      .then((res: { success?: boolean; data?: PermissionDefaults | null }) => {
-        if (res.success && res.data) setPermissionDefaults(res.data)
+      .then((res: ApiResponse) => {
+        if (res.success && res.data) setPermissionDefaults(res.data as PermissionDefaults)
       })
       .catch(() => { /* defaults stay null — no restrictions */ })
   }, [])
@@ -1380,7 +1381,7 @@ export function MessageChannelsSection({ config, setConfig }: MessageChannelsSec
   }, [t])
 
   const handleInstanceChange = useCallback((updated: ImChannelInstanceConfig) => {
-    const newInstances = instances.map(i => i.id === updated.id ? updated : i)
+    const newInstances = instances.map((i: ImChannelInstanceConfig) => i.id === updated.id ? updated : i)
     saveInstances(newInstances)
   }, [instances, saveInstances])
 
@@ -1407,7 +1408,7 @@ export function MessageChannelsSection({ config, setConfig }: MessageChannelsSec
   }, [instances, saveInstances, permissionDefaults])
 
   const handleDeleteInstance = useCallback((instanceId: string) => {
-    const newInstances = instances.filter(i => i.id !== instanceId)
+    const newInstances = instances.filter((i: ImChannelInstanceConfig) => i.id !== instanceId)
     saveInstances(newInstances)
   }, [instances, saveInstances])
 

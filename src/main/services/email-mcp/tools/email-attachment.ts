@@ -27,7 +27,7 @@ export function createEmailAttachmentTool(imap: ImapClient) {
         'Local path to save the file. If omitted, saves to a temp directory and returns the path.'
       ),
     },
-    async (input) => {
+    async (input: { email_id: string; filename: string; folder: string; save_path?: string }) => {
       try {
         const result = await imap.downloadAttachment(
           input.email_id,

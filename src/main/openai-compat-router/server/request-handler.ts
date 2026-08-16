@@ -285,7 +285,7 @@ async function fetchAnthropicUpstream(
     return await proxyFetch(targetUrl, {
       method: 'POST',
       headers,
-      body: Buffer.isBuffer(bodyOrBuffer) ? bodyOrBuffer : JSON.stringify(bodyOrBuffer),
+      body: Buffer.isBuffer(bodyOrBuffer) ? new Uint8Array(bodyOrBuffer) : JSON.stringify(bodyOrBuffer),
       signal: controller.signal
     })
   } finally {
@@ -572,7 +572,7 @@ async function handleOpenAIConversion(
     const adapterContext: AdapterContext = { originalRequest: requestToSend }
     const adapter = applyProviderAdapter(
       backendUrl,
-      openaiRequest as Record<string, unknown>,
+      openaiRequest as unknown as Record<string, unknown>,
       requestHeaders,
       adapterId,
       adapterContext
@@ -608,7 +608,7 @@ async function handleOpenAIConversion(
           : convertAnthropicToOpenAIChat({ ...anthropicRequest, stream: true }, convertOptions).request
 
         // Re-apply provider adapter to retry request (reuse same headers and context)
-        applyProviderAdapter(backendUrl, retryRequest as Record<string, unknown>, requestHeaders, adapterId, adapterContext)
+        applyProviderAdapter(backendUrl, retryRequest as unknown as Record<string, unknown>, requestHeaders, adapterId, adapterContext)
 
         const oaiRetryStartTs = Date.now()
         upstreamResp = await fetchUpstream(backendUrl, apiKey, retryRequest, timeoutMs, clientAbort.signal, requestHeaders)

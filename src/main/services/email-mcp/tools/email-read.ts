@@ -28,7 +28,12 @@ export function createEmailReadTool(imap: ImapClient) {
         'Maximum characters of body text to return. Set to 0 for unlimited. Default: 5000.'
       ),
     },
-    async (input) => {
+    async (input: {
+      email_id: string
+      folder: string
+      format: 'text' | 'html' | 'full'
+      max_body_length: number
+    }) => {
       try {
         const detail = await imap.readEmail(
           input.email_id,

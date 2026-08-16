@@ -13,7 +13,7 @@ import { createPortal } from 'react-dom'
 import { ArtifactCard, type ArtifactContextMenuState } from './ArtifactCard'
 import { ArtifactTree } from './ArtifactTree'
 import { api } from '../../api'
-import type { Artifact, ArtifactViewMode, ArtifactChangeEvent } from '../../types'
+import type { Artifact, ArtifactViewMode } from '../../types'
 import { useIsGenerating } from '../../stores/chat.store'
 import { useSpaceStore } from '../../stores/space.store'
 import { useOnboardingStore } from '../../stores/onboarding.store'
@@ -345,7 +345,7 @@ export function ArtifactRail({
     })
 
     // Subscribe to change events
-    const cleanup = api.onArtifactChanged((event: ArtifactChangeEvent) => {
+    const cleanup = api.onArtifactChanged((event) => {
       if (event.spaceId !== spaceId) return
 
       console.log('[ArtifactRail] Artifact changed:', event.type, event.relativePath)

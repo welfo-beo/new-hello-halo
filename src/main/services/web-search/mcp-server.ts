@@ -62,7 +62,7 @@ Returns: A list of search results, each with title, URL, and snippet.`,
           'may be unreachable without a proxy.'
         ),
     },
-    async (args) => {
+    async (args: { query: string; max_results?: number; engine?: 'auto' | 'bing' | 'baidu' | 'google' }) => {
       const ctx = getSearchContext()
 
       try {

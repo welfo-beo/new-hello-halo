@@ -267,7 +267,16 @@ function inferCodexUpstreamApiType(apiUrl: string): 'responses' | 'chat_completi
   return 'chat_completions'
 }
 
-function normalizeBackendEndpointUrl(apiUrl: string, apiType: 'responses' | 'chat_completions'): string {
+function normalizeBackendEndpointUrl(
+  apiUrl: string,
+  apiType: 'responses' | 'chat_completions' | 'anthropic_passthrough' | 'kiro'
+): string {
+  // anthropic_passthrough / kiro providers compose the full upstream endpoint
+  // URL themselves (their router handlers POST config.url verbatim); only the
+  // two OpenAI wire formats need the endpoint suffix composed here.
+  if (apiType === 'anthropic_passthrough' || apiType === 'kiro') {
+    return apiUrl
+  }
   const baseUrl = normalizeCodexBaseUrl(apiUrl)
   return apiType === 'responses' ? `${baseUrl}/responses` : `${baseUrl}/chat/completions`
 }

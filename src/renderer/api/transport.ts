@@ -435,7 +435,7 @@ export function forceReconnectWebSocket(): void {
 /**
  * Register event listener (works for IPC, WebSocket, or Capacitor WS)
  */
-export function onEvent(channel: string, callback: (data: unknown) => void): () => void {
+export function onEvent<T = unknown>(channel: string, callback: (data: T) => void): () => void {
   if (isElectron()) {
     // Use IPC in Electron
     const methodMap: Record<string, keyof typeof window.halo> = {
@@ -480,7 +480,7 @@ export function onEvent(channel: string, callback: (data: unknown) => void): () 
 
     const method = methodMap[channel]
     if (method && typeof window.halo[method] === 'function') {
-      return (window.halo[method] as (cb: (data: unknown) => void) => () => void)(callback)
+      return (window.halo[method] as (cb: (data: unknown) => void) => () => void)(callback as (data: unknown) => void)
     }
 
     return () => {}
@@ -489,10 +489,10 @@ export function onEvent(channel: string, callback: (data: unknown) => void): () 
     if (!wsEventListeners.has(channel)) {
       wsEventListeners.set(channel, new Set())
     }
-    wsEventListeners.get(channel)!.add(callback)
+    wsEventListeners.get(channel)!.add(callback as (data: unknown) => void)
 
     return () => {
-      wsEventListeners.get(channel)?.delete(callback)
+      wsEventListeners.get(channel)?.delete(callback as (data: unknown) => void)
     }
   }
 }

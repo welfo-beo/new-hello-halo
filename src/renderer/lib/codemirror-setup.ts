@@ -56,7 +56,7 @@ import { java } from '@codemirror/lang-java'
 import { php } from '@codemirror/lang-php'
 import { vue } from '@codemirror/lang-vue'
 import { svelte } from '@replit/codemirror-lang-svelte'
-import { StreamLanguage } from '@codemirror/language'
+import { StreamLanguage, StreamParser } from '@codemirror/language'
 import { haloTheme } from './codemirror-theme'
 
 // Legacy mode languages (for less common languages)
@@ -181,15 +181,15 @@ const languageMap: Record<string, () => LanguageSupport | Extension> = {
   groovy: () => StreamLanguage.define(groovy),
 
   // C-like languages (legacy modes)
-  kotlin: () => StreamLanguage.define(clike),
-  kt: () => StreamLanguage.define(clike),
-  kts: () => StreamLanguage.define(clike),
-  csharp: () => StreamLanguage.define(clike),
-  cs: () => StreamLanguage.define(clike),
-  scala: () => StreamLanguage.define(clike),
-  dart: () => StreamLanguage.define(clike),
-  objectivec: () => StreamLanguage.define(clike),
-  m: () => StreamLanguage.define(clike), // Objective-C
+  kotlin: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  kt: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  kts: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  csharp: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  cs: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  scala: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  dart: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  objectivec: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>),
+  m: () => StreamLanguage.define(clike as unknown as StreamParser<unknown>), // Objective-C
 
   // R language (proper support)
   r: () => StreamLanguage.define(r),

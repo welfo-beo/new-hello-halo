@@ -12,7 +12,9 @@
  */
 
 import i18n from 'i18next'
-import { initReactI18next, useTranslation as useI18nTranslation } from 'react-i18next'
+import { initReactI18next } from 'react-i18next'
+
+export { useTranslation } from 'react-i18next'
 
 // Import all locale files
 import en from './locales/en.json'
@@ -109,9 +111,6 @@ i18n
     // Enable debug in development
     debug: import.meta.env.DEV
   })
-
-// Re-export useTranslation for convenience
-export const useTranslation = useI18nTranslation
 
 /**
  * Change language and persist to localStorage

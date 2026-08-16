@@ -45,7 +45,7 @@ export function setDisplayScale(win: BrowserWindow | null, factor: number): numb
   win?.webContents.setZoomFactor(f)
   if (f !== currentScale) {
     currentScale = f
-    saveConfig({ appearance: { displayScale: f } })
+    saveConfig({ appearance: { theme: getConfig().appearance.theme, displayScale: f } })
     win?.webContents.send('display:scale-changed', f)
   }
   return f

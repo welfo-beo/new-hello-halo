@@ -347,9 +347,9 @@ function SettingsTab({ app, appId, spaceName, t, onRequireRestart }: SettingsTab
 
   // Type-narrowed helpers for automation-specific fields
   const isAutomation = app.spec.type === 'automation'
-  const specSystemPromptValue = isAutomation ? app.spec.system_prompt : ''
-  const specSubscriptions = isAutomation ? (app.spec.subscriptions ?? []) : []
-  const specRecommendedModel = isAutomation ? app.spec.recommended_model : undefined
+  const specSystemPromptValue = app.spec.type === 'automation' ? app.spec.system_prompt : ''
+  const specSubscriptions = app.spec.type === 'automation' ? (app.spec.subscriptions ?? []) : []
+  const specRecommendedModel = app.spec.type === 'automation' ? app.spec.recommended_model : undefined
   // ── Spec fields (name, description, system_prompt) ──
   // A skill's spec.name is its command identifier, so the editable "name" is the
   // display name and the identifier gets its own field.
@@ -949,7 +949,7 @@ function YamlTab({ app, appId, t, onRequireRestart }: YamlTabProps) {
 
     // Detect whether the saved YAML changed a session-affecting field so the
     // manual-restart fallback banner is not raised for cosmetic edits.
-    const promptChanged = parsed.system_prompt !== app.spec.system_prompt
+    const promptChanged = parsed.system_prompt !== (app.spec.type === 'automation' ? app.spec.system_prompt : undefined)
     const configChanged = JSON.stringify(parsed.config_schema ?? null)
       !== JSON.stringify(app.spec.config_schema ?? null)
 

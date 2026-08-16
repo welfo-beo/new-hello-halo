@@ -36,7 +36,8 @@ export const FREQUENCY_PRESETS = [
 // ============================================
 
 // Re-export from renderer types layer (single source of truth)
-export type { ScheduleValue } from '../../types'
+import type { ScheduleValue } from '../../types'
+export type { ScheduleValue }
 
 /** State representation for the cron visual picker */
 export interface CronPickerState {

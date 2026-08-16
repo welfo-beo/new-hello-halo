@@ -28,7 +28,8 @@ export function SearchHighlightBar() {
     openSearch
   } = useSearchStore()
 
-  const { currentConversationId } = useChatStore()
+  const { getCurrentConversationId } = useChatStore()
+  const currentConversationId = getCurrentConversationId()
 
   // Debounce timer for navigation to prevent rapid switches
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)

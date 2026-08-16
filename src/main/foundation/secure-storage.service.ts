@@ -90,7 +90,7 @@ export function decryptString(value: string): string {
  * @deprecated Do not use - causes Keychain prompts on macOS
  * Encrypts: accessToken, refreshToken
  */
-export function encryptTokens<T extends Record<string, any>>(obj: T): T {
+export function encryptTokens<T extends { accessToken?: string; refreshToken?: string }>(obj: T): T {
   if (!obj) return obj
 
   const result = { ...obj }
@@ -110,7 +110,7 @@ export function encryptTokens<T extends Record<string, any>>(obj: T): T {
  * Decrypt token fields in an object
  * Decrypts: accessToken, refreshToken
  */
-export function decryptTokens<T extends Record<string, any>>(obj: T): T {
+export function decryptTokens<T extends { accessToken?: string; refreshToken?: string }>(obj: T): T {
   if (!obj) return obj
 
   const result = { ...obj }

@@ -20,13 +20,18 @@ const browser_network_requests = tool(
     resourceTypes: z.array(z.string()).optional().describe('Filter requests to only return requests of the specified resource types. When omitted or empty, returns all requests.'),
     includePreservedRequests: z.boolean().optional().describe('Set to true to return the preserved requests over the last 3 navigations.')
   },
-  async (args) => {
+  async (args: {
+    pageSize?: number
+    pageIdx?: number
+    resourceTypes?: string[]
+    includePreservedRequests?: boolean
+  }) => {
     try {
       let requests = ctx.getNetworkRequests(args.includePreservedRequests || false)
 
       // Filter by resource type
       if (args.resourceTypes && args.resourceTypes.length > 0) {
-        const types = new Set(args.resourceTypes.map(t => t.toLowerCase()))
+        const types = new Set(args.resourceTypes.map((t: string) => t.toLowerCase()))
         requests = requests.filter(r => types.has(r.resourceType.toLowerCase()))
       }
 
@@ -86,7 +91,7 @@ const browser_network_request = tool(
   {
     reqid: z.number().optional().describe('The reqid of the network request.')
   },
-  async (args) => {
+  async (args: { reqid?: number }) => {
     try {
       let request
 

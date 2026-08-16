@@ -90,7 +90,7 @@ export function registerConfigHandlers(): void {
         // No deep merging needed - frontend manages the complete sources array
 
         // Restore '***' sentinels to real values before saving.
-        const existing = getConfig() as Record<string, unknown>
+        const existing = getConfig() as unknown as Record<string, unknown>
         unmaskSentinels(processedUpdates, existing)
 
         const config = saveConfig(processedUpdates)
@@ -111,7 +111,7 @@ export function registerConfigHandlers(): void {
           })
         }
 
-        return { success: true, data: maskConfigFields(config as Record<string, unknown>) }
+        return { success: true, data: maskConfigFields(config as unknown as Record<string, unknown>) }
       } catch (error: unknown) {
         const err = error as Error
         console.error('[Settings] config:set - Failed:', err.message)

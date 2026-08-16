@@ -683,6 +683,7 @@ export async function reconcileLoadedDirs(spaceId: string, reason = 'manual'): P
           extension: freshNode.name.includes('.') ? freshNode.name.slice(freshNode.name.lastIndexOf('.')) : '',
           icon: '',
           createdAt: new Date().toISOString(),
+          modifiedAt: new Date().toISOString(),
           size: freshNode.size,
         })
       }

@@ -130,7 +130,7 @@ function buildTools(spaceId: string) {
         'type is always "automation". version defaults to "1.0", author defaults to "Halo".'
       )
     },
-    async (args) => {
+    async (args: { spec: string }) => {
       try {
         const manager = await waitForAppManager()
         if (!manager) {
@@ -202,7 +202,7 @@ function buildTools(spaceId: string) {
     {
       app_id: z.string().describe('The app ID to delete')
     },
-    async (args) => {
+    async (args: { app_id: string }) => {
       try {
         const manager = await waitForAppManager()
         const runtime = getAppRuntime()
@@ -247,7 +247,7 @@ function buildTools(spaceId: string) {
     {
       app_id: z.string().describe('The app ID')
     },
-    async (args) => {
+    async (args: { app_id: string }) => {
       try {
         const manager = await waitForAppManager()
         const runtime = getAppRuntime()
@@ -289,7 +289,7 @@ function buildTools(spaceId: string) {
     {
       app_id: z.string().describe('The app ID to pause')
     },
-    async (args) => {
+    async (args: { app_id: string }) => {
       try {
         const manager = await waitForAppManager()
         const runtime = getAppRuntime()
@@ -320,7 +320,7 @@ function buildTools(spaceId: string) {
     {
       app_id: z.string().describe('The app ID to resume')
     },
-    async (args) => {
+    async (args: { app_id: string }) => {
       try {
         const manager = await waitForAppManager()
         const runtime = getAppRuntime()
@@ -378,7 +378,7 @@ function buildTools(spaceId: string) {
         'Set a field to null to remove it. Use "frequency" shorthand for schedule changes.'
       )
     },
-    async (args) => {
+    async (args: { app_id: string; updates: string }) => {
       try {
         const manager = await waitForAppManager()
         const runtime = getAppRuntime()
@@ -479,7 +479,7 @@ function buildTools(spaceId: string) {
     {
       app_id: z.string().describe('The app ID to trigger')
     },
-    async (args) => {
+    async (args: { app_id: string }) => {
       try {
         const runtime = getAppRuntime()
 
@@ -533,7 +533,7 @@ function buildTools(spaceId: string) {
       skill_id: z.string().optional().describe('Skill ID for uninstall'),
       scope: z.enum(['global', 'space']).optional().describe('Install scope: "global" for all spaces, "space" for current space only. Default: "space"')
     },
-    async (args) => {
+    async (args: { action: 'install' | 'uninstall'; slug?: string; spec?: string; skill_id?: string; scope?: 'global' | 'space' }) => {
       try {
         const manager = await waitForAppManager()
         if (!manager) {

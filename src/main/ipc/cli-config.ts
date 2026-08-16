@@ -288,6 +288,7 @@ export function registerCliConfigHandlers(): void {
         saveConfig({
           agent: {
             ...currentConfig.agent,
+            maxTurns: currentConfig.agent?.maxTurns ?? 999,
             configDirMode: mode,
             customConfigDir: mode === 'custom' ? resolvedCustomDir : undefined,
           }
@@ -324,7 +325,7 @@ export function registerCliConfigHandlers(): void {
  * Halo McpSpec for installation into the App Manager DB.
  */
 function ccMcpConfigToSpec(name: string, config: McpServerConfig): McpSpec {
-  const typed = config as Record<string, unknown>
+  const typed = config as unknown as Record<string, unknown>
   const transport = inferTransport(typed)
 
   const spec: McpSpec = {
@@ -384,7 +385,7 @@ function inferTransport(config: Record<string, unknown>): 'stdio' | 'sse' | 'str
  * which get merged into env at runtime (via getDbMcpServers in helpers.ts).
  */
 function buildUserConfigFromEnv(config: McpServerConfig): Record<string, unknown> {
-  const typed = config as Record<string, unknown>
+  const typed = config as unknown as Record<string, unknown>
   const env = typed.env as Record<string, string> | undefined
   if (!env || typeof env !== 'object') return {}
   // Copy all env vars as userConfig entries

@@ -108,7 +108,7 @@ export function AdvancedSection({ config, setConfig }: AdvancedSectionProps) {
     config?.agent?.sdkEngine ?? 'anthropic'
   )
   const [disabledTools, setDisabledToolsState] = useState<string[]>(
-    config?.agent?.disabledTools ?? DEFAULT_DISABLED_TOOLS
+    config?.agent?.disabledTools ?? [...DEFAULT_DISABLED_TOOLS]
   )
   // Track dedicated config flags for capabilities that use configKey
   const [configFlags, setConfigFlags] = useState<Record<string, boolean>>(() => {
@@ -234,7 +234,7 @@ export function AdvancedSection({ config, setConfig }: AdvancedSectionProps) {
       await saveAgentConfig({ disabledTools: newDisabled, ...extraPatch })
     } catch (error) {
       console.error('[AdvancedSection] Failed to update capability:', error)
-      setDisabledToolsState(config?.agent?.disabledTools ?? DEFAULT_DISABLED_TOOLS)
+      setDisabledToolsState(config?.agent?.disabledTools ?? [...DEFAULT_DISABLED_TOOLS])
       if (key) {
         setConfigFlags(prev => ({
           ...prev,

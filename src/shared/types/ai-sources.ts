@@ -263,6 +263,15 @@ export interface AISourcesConfig {
   currentId: string | null
   /** All configured sources */
   sources: AISource[]
+  /**
+   * Legacy v1 provider-specific keys. Providers still consume a v1-shaped
+   * object typed as AISourcesConfig (see interfaces/ai-source-provider.ts and
+   * AISourceManager.buildLegacyOAuthConfig), so each provider indexes config
+   * with its own provider id.
+   */
+  'claude'?: OAuthSourceConfig
+  'github-copilot'?: OAuthSourceConfig
+  custom?: CustomSourceConfig
 }
 
 // ============================================================================

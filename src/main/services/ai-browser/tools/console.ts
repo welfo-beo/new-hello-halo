@@ -20,7 +20,12 @@ const browser_console = tool(
     types: z.array(z.string()).optional().describe('Filter messages to only return messages of the specified types. When omitted or empty, returns all messages.'),
     includePreservedMessages: z.boolean().optional().describe('Set to true to return the preserved messages over the last 3 navigations.')
   },
-  async (args) => {
+  async (args: {
+    pageSize?: number
+    pageIdx?: number
+    types?: string[]
+    includePreservedMessages?: boolean
+  }) => {
     try {
       let messages = ctx.getConsoleMessages(args.includePreservedMessages || false)
 
@@ -84,7 +89,7 @@ const browser_console_message = tool(
   {
     msgid: z.number().describe('The msgid of a console message on the page from the listed console messages')
   },
-  async (args) => {
+  async (args: { msgid: number }) => {
     try {
       const message = ctx.getConsoleMessage(String(args.msgid))
 

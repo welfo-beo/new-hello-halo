@@ -116,7 +116,7 @@ class AnalyticsService {
     // telemetry — unless a telemetry endpoint is explicitly configured (via
     // .env.local), which signals an intentional local telemetry test against a
     // self-hosted backend rather than the production one.
-    if (is.dev && !PROVIDER_CONFIG.telemetry.endpoint) {
+    if (is.dev && !loadProviderConfig().telemetry.endpoint) {
       console.log('[Analytics] Skipping in development mode (no telemetry endpoint configured)')
       this.markSettled()
       return

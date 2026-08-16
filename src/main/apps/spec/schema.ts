@@ -368,6 +368,8 @@ export const StoreMetadataSchema = z.object({
   category: z.string().optional(),
   /** Free-form tags for discovery */
   tags: z.array(z.string()).default([]),
+  /** Per-version release notes surfaced in the store version history. */
+  changelog: z.string().optional(),
   /** Primary locale (BCP 47) */
   locale: z.string().optional(),
   /** Minimum client version required */

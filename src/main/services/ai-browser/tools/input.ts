@@ -45,7 +45,7 @@ For drag-and-drop operations, provide the dragTo parameter with the target eleme
       'Target element uid for drag-and-drop. The element at uid is dragged onto the element at dragTo.'
     )
   },
-  async (args) => {
+  async (args: { uid: string; dblClick?: boolean; dragTo?: string }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page. Use browser_navigate first.', true)
     }
@@ -110,7 +110,11 @@ If filling doesn't work (e.g., custom dropdowns that aren't real <select> elemen
       'Batch mode: array of { uid, value } objects to fill multiple fields at once. When provided, top-level uid and value are ignored.'
     )
   },
-  async (args) => {
+  async (args: {
+    uid?: string
+    value?: string
+    elements?: { uid: string; value: string }[]
+  }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }
@@ -175,10 +179,10 @@ const browser_hover = tool(
 After hovering, take a browser_snapshot to see newly revealed content and get UIDs for elements that appeared.`,
   {
     uid: z.string().describe(
-      'The uid of the element to hover over, from the latest browser_snapshot.'
+      'The uid of the element to hover over, from the most recent browser_snapshot.'
     )
   },
-  async (args) => {
+  async (args: { uid: string }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }
@@ -212,7 +216,7 @@ Prefer browser_fill for entering text into fields. Use press_key only for modifi
       'Key or combination to press. Examples: "Enter", "Tab", "Escape", "Control+A", "Control+Shift+R". Modifiers: Control, Shift, Alt, Meta.'
     )
   },
-  async (args) => {
+  async (args: { key: string }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }
@@ -242,7 +246,7 @@ All files must exist on the local filesystem. After uploading, take a browser_sn
     filePath: z.union([z.string(), z.array(z.string()).min(1)])
       .describe('Local file path (string) or array of paths (string[]) to upload.')
   },
-  async (args) => {
+  async (args: { uid: string; filePath: string | string[] }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }
@@ -252,7 +256,7 @@ All files must exist on the local filesystem. After uploading, take a browser_sn
       const filePaths = Array.isArray(args.filePath) ? args.filePath : [args.filePath]
 
       // Validate all files exist
-      const missing = filePaths.filter(p => !fs.existsSync(p))
+      const missing = filePaths.filter((p: string) => !fs.existsSync(p))
       if (missing.length > 0) {
         return textResult(`File(s) not found: ${missing.join(', ')}`, true)
       }

@@ -123,7 +123,14 @@ export function createReportToolServer(
         'Only for escalation: preset answer choices (user can also type freely).'
       ),
     },
-    async (input) => {
+    async (input: {
+      type: 'run_complete' | 'run_skipped' | 'milestone' | 'escalation' | 'output'
+      summary?: string
+      data?: string
+      data_path?: string
+      question?: string
+      choices?: string[]
+    }) => {
       const entryId = randomUUID()
       const now = Date.now()
       const runTag = runContext.runId.slice(0, 8)

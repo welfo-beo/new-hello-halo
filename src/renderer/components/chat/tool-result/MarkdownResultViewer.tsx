@@ -27,7 +27,7 @@ export function MarkdownResultViewer({
   const [isExpanded, setIsExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const [needsExpand, setNeedsExpand] = useState(false)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement | null>(null)
 
   // Check if content overflows preview height
   const checkOverflow = useCallback((node: HTMLDivElement | null) => {

@@ -62,7 +62,7 @@ const browser_perf_start = tool(
     reload: z.boolean().describe('Determines if, once tracing has started, the page should be automatically reloaded.'),
     autoStop: z.boolean().describe('Determines if the trace recording should be automatically stopped.')
   },
-  async (args) => {
+  async (args: { reload: boolean; autoStop: boolean }) => {
     const viewId = ctx.getActiveViewId()
     if (!viewId) {
       return textResult('No active browser page.', true)
@@ -132,7 +132,7 @@ const browser_perf_insight = tool(
     insightSetId: z.string().describe('The id for the specific insight set. Only use the ids given in the "Available insight sets" list.'),
     insightName: z.string().describe('The name of the Insight you want more information on. For example: "DocumentLatency" or "LCPBreakdown"')
   },
-  async (args) => {
+  async (args: { insightSetId: string; insightName: string }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }

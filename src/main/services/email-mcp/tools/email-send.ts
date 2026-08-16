@@ -36,7 +36,15 @@ export function createEmailSendTool(smtp: SmtpClient) {
         'List of local file paths to attach. Example: ["/path/to/file.pdf"]'
       ),
     },
-    async (input) => {
+    async (input: {
+      to: string
+      subject: string
+      body: string
+      cc?: string
+      bcc?: string
+      is_html: boolean
+      attachments?: string[]
+    }) => {
       try {
         const result = await smtp.send({
           to: input.to,

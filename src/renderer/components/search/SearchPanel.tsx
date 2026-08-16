@@ -47,7 +47,8 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const { t } = useTranslation()
 
-  const { currentSpaceId, currentConversationId, selectConversation, setCurrentSpace, loadConversations } = useChatStore()
+  const { currentSpaceId, selectConversation, setCurrentSpace, loadConversations, getCurrentConversationId } = useChatStore()
+  const currentConversationId = getCurrentConversationId()
   const { spaces, haloSpace, setCurrentSpace: setSpaceStoreCurrentSpace } = useSpaceStore()
 
   // Use search store for state management

@@ -31,7 +31,8 @@ export function OverlayApp() {
   useEffect(() => {
     // Listen for overlay state changes from main process
     // Note: preload strips the event, so we receive newState directly as first argument
-    const handleOverlayState = (newState: Partial<OverlayState>) => {
+    const handleOverlayState = (...args: unknown[]) => {
+      const newState = args[0] as Partial<OverlayState>
       setState(prev => ({ ...prev, ...newState }))
     }
 

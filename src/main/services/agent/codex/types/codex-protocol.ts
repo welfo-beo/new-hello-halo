@@ -452,6 +452,7 @@ export const ServerNotifications = {
   TurnFailed: 'turn/failed',
 
   ItemStarted: 'item/started',
+  ItemUpdated: 'item/updated',
   ItemCompleted: 'item/completed',
 
   AgentMessageDelta: 'item/agentMessage/delta',

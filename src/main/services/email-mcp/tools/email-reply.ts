@@ -32,7 +32,7 @@ export function createEmailReplyTool(imap: ImapClient, smtp: SmtpClient, userEma
         'Additional CC recipients beyond the original.'
       ),
     },
-    async (input) => {
+    async (input: { email_id: string; body: string; folder: string; reply_all: boolean; cc?: string }) => {
       try {
         // Fetch original email for reply context
         const raw = await imap.getRawMessage(input.email_id, input.folder)

@@ -58,7 +58,15 @@ Console inspection (target: "console"):
       'Include entries preserved from the last 3 navigations. Default: false (current navigation only).'
     )
   },
-  async (args) => {
+  async (args: {
+    target: 'network' | 'console'
+    id?: number
+    resourceTypes?: string[]
+    types?: string[]
+    limit?: number
+    offset?: number
+    includePreserved?: boolean
+  }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page. Use browser_navigate first.', true)
     }

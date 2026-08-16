@@ -344,6 +344,7 @@ export class ClaudeSkillsAdapter implements RegistryAdapter {
       store: {
         slug: entry.slug,
         registry_id: source.id,
+        tags: [],
       },
     }
     return spec

@@ -242,15 +242,15 @@ function getSimulationConfig(): CopilotSimulation {
   let max: number
 
   if (hasMin && hasMax) {
-    min = sim.idReuseMin
-    max = sim.idReuseMax
+    min = sim.idReuseMin ?? 0
+    max = sim.idReuseMax ?? 0
     if (min > max) { const tmp = min; min = max; max = tmp }
   } else if (hasMin) {
-    min = sim.idReuseMin
-    max = sim.idReuseMin
+    min = sim.idReuseMin ?? 0
+    max = sim.idReuseMin ?? 0
   } else if (hasMax) {
-    min = sim.idReuseMax
-    max = sim.idReuseMax
+    min = sim.idReuseMax ?? 0
+    max = sim.idReuseMax ?? 0
   } else {
     min = DEFAULT_SIMULATION.idReuseMin
     max = DEFAULT_SIMULATION.idReuseMax

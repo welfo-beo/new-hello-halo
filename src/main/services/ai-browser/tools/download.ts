@@ -39,7 +39,7 @@ Returns the local file path, file size, MIME type, and download status on comple
       'Maximum wait time in milliseconds for the download to complete. Default: 120000 (2 minutes).'
     ),
   },
-  async (args) => {
+  async (args: { url?: string; timeout?: number }) => {
     const viewId = ctx.getActiveViewId()
     if (!viewId) {
       return textResult('No active browser page. Use browser_navigate first.', true)

@@ -32,7 +32,11 @@ const browser_emulate = tool(
       longitude: z.number().min(-180).max(180).describe('Longitude between -180 and 180.')
     }).nullable().optional().describe('Geolocation to emulate. Set to null to clear the geolocation override.')
   },
-  async (args) => {
+  async (args: {
+    networkConditions?: 'No emulation' | 'Offline' | 'Slow 3G' | 'Fast 3G' | 'Regular 4G' | 'DSL' | 'WiFi'
+    cpuThrottlingRate?: number
+    geolocation?: { latitude: number; longitude: number } | null
+  }) => {
     if (!ctx.getActiveViewId()) {
       return textResult('No active browser page.', true)
     }

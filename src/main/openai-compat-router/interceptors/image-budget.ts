@@ -96,12 +96,13 @@ function collectImageLocations(messages: AnthropicMessage[]): ImageLocation[] {
       if (block.type === 'tool_result' && Array.isArray(block.content)) {
         for (let ti = 0; ti < block.content.length; ti++) {
           const inner = block.content[ti]
-          if (inner.type === 'image' && (inner as AnthropicImageBlock).source?.type === 'base64') {
+          const source = inner.type === 'image' ? (inner as AnthropicImageBlock).source : undefined
+          if (source?.type === 'base64') {
             locations.push({
               messageIndex: mi,
               contentIndex: ci,
               toolResultContentIndex: ti,
-              base64Length: (inner as AnthropicImageBlock).source.data.length
+              base64Length: source.data.length
             })
           }
         }
